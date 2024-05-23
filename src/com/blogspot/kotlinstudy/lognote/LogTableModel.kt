@@ -587,9 +587,14 @@ class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTableMo
 
         line = bufferedReader.readLine()
         while (line != null) {
+            level = LEVEL_NONE
+            tag = ""
+            pid = ""
+            tid = ""
+
             val textSplited = line.trim().split(Regex("\\s+"))
 
-            if (mFilterLevel != LEVEL_NONE && textSplited.size > TAG_INDEX) {
+            if (mFilterLevel != LEVEL_NONE && textSplited.size > TAG_INDEX && textSplited[0][1] != '/') {
                 if (Character.isDigit(textSplited[PID_INDEX][0])) {
                     level = levelToInt(textSplited[LEVEL_INDEX])
                     tag = textSplited[TAG_INDEX]
@@ -598,21 +603,22 @@ class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTableMo
                 }
                 else if (Character.isAlphabetic(textSplited[PID_INDEX][0].code)) {
                     level = levelToInt(textSplited[PID_INDEX][0].toString())
-                    tag = ""
-                    pid = ""
-                    tid = ""
                 }
-                else {
-                    level = LEVEL_NONE
-                    tag = ""
-                    pid = ""
-                    tid = ""
+            }  else if (mFilterLevel != LEVEL_NONE) {
+                val textSplited = line.trim().split(":")
+                if (textSplited.size >= 2 && textSplited[0][1] == '/') {
+                    val pattern = Regex("""([A-Z])/(.*)\(\s*(\d+)\s*\)""")
+                    val matchResult = pattern.find(textSplited[0])
+                    if (matchResult != null) {
+                        val (levelStr, tagStr, pidStr) = matchResult.destructured
+                        if (Character.isDigit(pidStr[0])) {
+                            level = levelToInt(levelStr)
+                            tag = tagStr
+                            pid = pidStr
+                            tid = ""
+                        }
+                    }
                 }
-            }  else {
-                level = LEVEL_NONE
-                tag = ""
-                pid = ""
-                tid = ""
             }
 
             if (level != LEVEL_NONE) {
