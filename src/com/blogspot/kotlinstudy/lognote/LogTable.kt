@@ -596,6 +596,17 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             ToolTipManager.sharedInstance().mouseMoved(MouseEvent(this@LogTable, 0, 0, 0, 0, 0, 0, false))
             if (p0?.keyCode == KeyEvent.VK_B && (p0.modifiers and KeyEvent.CTRL_MASK) != 0) {
                 updateBookmark(selectedRow)
+            } else if (p0?.keyCode == KeyEvent.VK_F2 && (p0.modifiers and KeyEvent.CTRL_MASK) != 0) {
+                updateBookmark(selectedRow)
+            } else if (p0?.keyCode == KeyEvent.VK_F2) {
+                val mainUI = MainUI.getInstance()
+                val value = mTableModel.getValueAt(selectedRow, 0)
+                val row = value.toString().trim().toInt()
+                if ((p0.modifiers and KeyEvent.SHIFT_MASK) != 0) {
+                    mainUI.mFilteredLogPanel.goToRowByFullLineNum(BookmarkManager.getInstance().getPrevBookmark(row), -1)
+                } else {
+                    mainUI.mFilteredLogPanel.goToRowByFullLineNum(BookmarkManager.getInstance().getNextBookmark(row), -1)
+                }
             } else if (p0?.keyCode == KeyEvent.VK_PAGE_DOWN) {
                 downPage()
             } else if (p0?.keyCode == KeyEvent.VK_PAGE_UP) {
