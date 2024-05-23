@@ -1356,7 +1356,7 @@ class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTableMo
                     isShow = true
 
                     if (!mFullMode) {
-                        if (item.mLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
+                        if ((item.mLevel != LEVEL_NONE && item.mLevel < mFilterLevel) || (item.mLevel == LEVEL_NONE && item.mLogLine.isEmpty())) {//
                             isShow = false
                         }
                         else if ((mFilterHideLog.isNotEmpty() && mPatternHideLog.matcher(item.mLogLine).find())
@@ -1571,7 +1571,7 @@ class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTableMo
                                 }
 
                                 if (!mFullMode) {
-                                    if (isShow && item.mLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
+                                    if (isShow && ((item.mLevel != LEVEL_NONE && item.mLevel < mFilterLevel) || (item.mLevel == LEVEL_NONE && item.mLogLine.isEmpty()))) {//
                                         isShow = false
                                     }
                                     if (isShow
