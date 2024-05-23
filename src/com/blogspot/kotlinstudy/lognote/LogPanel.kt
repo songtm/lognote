@@ -186,6 +186,7 @@ class LogPanel(mainUI: MainUI, tableModel: LogTableModel, basePanel: LogPanel?, 
                     } else {
                         mMainUI.setTextShowLogCombo((e.source as TableBarButton).mValue)
                     }
+                    mMainUI.mShowLogToggle.isSelected = true
                     mMainUI.applyShowLogCombo(false)
                 }
                 mCtrlMainPanel.add(button)

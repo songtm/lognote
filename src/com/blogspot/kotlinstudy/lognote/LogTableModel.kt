@@ -2050,6 +2050,14 @@ class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTableMo
         }
     }
 
+    fun getValueTag(row: Int): String {
+        return if (row >= 0 && row < mLogItems.size) {
+            mLogItems[row].mTag
+        } else {
+            ""
+        }
+    }
+
     fun saveFile(target: String) {
         val bufferedWriter = BufferedWriter(FileWriter(target))
         if (SwingUtilities.isEventDispatchThread()) {

@@ -111,7 +111,7 @@ class MainUI private constructor() : JFrame() {
     private lateinit var mMatchCaseTogglePanel: JPanel
     lateinit var mShowLogCombo: FilterComboBox
     var mShowLogComboStyle: FilterComboBox.Mode
-    private lateinit var mShowLogToggle: ColorToggleButton
+    lateinit var mShowLogToggle: ColorToggleButton
     private lateinit var mShowLogTogglePanel: JPanel
 
     private lateinit var mBoldLogPanel: JPanel
@@ -123,7 +123,7 @@ class MainUI private constructor() : JFrame() {
     private lateinit var mShowTagPanel: JPanel
     lateinit var mShowTagCombo: FilterComboBox
     var mShowTagComboStyle: FilterComboBox.Mode
-    private lateinit var mShowTagToggle: ColorToggleButton
+    lateinit var mShowTagToggle: ColorToggleButton
     private lateinit var mShowTagTogglePanel: JPanel
 
     private lateinit var mShowPidPanel: JPanel

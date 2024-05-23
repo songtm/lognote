@@ -388,6 +388,7 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
     internal inner class PopUpTable(point: Point) : JPopupMenu() {
         var mProcessItem: JMenuItem = JMenuItem("")
         var mFilterProcessItem: JMenuItem = JMenuItem("")
+        var mFilterTagItem: JMenuItem = JMenuItem("")
         var mCopyItem: JMenuItem = JMenuItem("Copy")
         var mShowEntireItem = JMenuItem("Show entire line")
         var mBookmarkItem = JMenuItem("Bookmark")
@@ -403,10 +404,17 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             val row = rowAtPoint(point)
             val pid = mTableModel.getValueProcess(row)
             if (pid.isNotEmpty()) {
-                mFilterProcessItem.text = "Filter Pid:$pid"
+                mFilterProcessItem.text = "FilterPid: $pid"
                 mFilterProcessItem.toolTipText = pid
                 mFilterProcessItem.addActionListener(mActionHandler)
                 add(mFilterProcessItem)
+            }
+            val tag = mTableModel.getValueTag(row)
+            if (tag.isNotEmpty()) {
+                mFilterTagItem.text = "FilterTag: $tag"
+                mFilterTagItem.toolTipText = tag
+                mFilterTagItem.addActionListener(mActionHandler)
+                add(mFilterTagItem)
             }
             //end
             val column: Int = columnAtPoint(point)
@@ -452,6 +460,12 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                         mainUI.mShowPidCombo.setFilterText(mFilterProcessItem.toolTipText)
                         mainUI.mShowPidToggle.isSelected = true
                         mainUI.mShowPidCombo.applyFilterText(true)
+                    }
+                    mFilterTagItem -> {
+                        val mainUI = MainUI.getInstance()
+                        mainUI.mShowTagCombo.setFilterText(mFilterTagItem.toolTipText)
+                        mainUI.mShowTagToggle.isSelected = true
+                        mainUI.mShowTagCombo.applyFilterText(true)
                     }
                     mCopyItem -> {
                         this@LogTable.processKeyEvent(KeyEvent(this@LogTable, KeyEvent.KEY_PRESSED, p0.`when`, KeyEvent.CTRL_MASK, KeyEvent.VK_C, 'C'))
