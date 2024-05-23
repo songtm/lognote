@@ -129,7 +129,7 @@ class MainUI private constructor() : JFrame() {
     private lateinit var mShowPidPanel: JPanel
     lateinit var mShowPidCombo: FilterComboBox
     var mShowPidComboStyle: FilterComboBox.Mode
-    private lateinit var mShowPidToggle: ColorToggleButton
+    lateinit var mShowPidToggle: ColorToggleButton
     private lateinit var mShowPidTogglePanel: JPanel
 
     private lateinit var mShowTidPanel: JPanel

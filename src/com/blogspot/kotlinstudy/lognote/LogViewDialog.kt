@@ -6,7 +6,7 @@ import java.awt.event.*
 import javax.swing.*
 
 
-class LogViewDialog (mainUI: MainUI, log:String, caretPos: Int) : JDialog(mainUI, "Log", false) {
+class LogViewDialog (mainUI: MainUI, log:String, caretPos: Int, selectLen: Int = 0) : JDialog(mainUI, "Log", false) {
 
     val mTextArea = JTextArea()
     private val mScrollPane = JScrollPane(mTextArea)
@@ -69,7 +69,7 @@ class LogViewDialog (mainUI: MainUI, log:String, caretPos: Int) : JDialog(mainUI
         mTextArea.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(
                 KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.CTRL_MASK or KeyEvent.SHIFT_MASK), key)
         mTextArea.actionMap.put(key, mIncludeAction)
-
+        if (selectLen > 0) mTextArea.select(caretPos, caretPos + selectLen)
         Utils.installKeyStrokeEscClosing(this)
 
         mPopupMenu = PopUpLogViewDialog()

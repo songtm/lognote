@@ -309,6 +309,7 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
     private fun showSelected(targetRow:Int) {
         val log = StringBuilder("")
         var caretPos = 0
+        var targetRowLen = 0
         var value:String
 
         if (selectedRowCount > 1) {
@@ -329,15 +330,22 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
 
             for (idx in startIdx until endIdx) {
                 if (idx == targetRow) {
+                    log.appendLine("=====")
+                    log.appendLine("=====")
                     caretPos = log.length
                 }
                 value = mTableModel.getValueAt(idx, 1).toString() + "\n"
                 log.append(value)
+                if (idx == targetRow) {
+                    targetRowLen = value.length - 1
+                    log.appendLine("=====")
+                    log.appendLine("=====")
+                }
             }
         }
 
         val mainUI = MainUI.getInstance()
-        val logViewDialog = LogViewDialog(mainUI, log.toString().trim(), caretPos)
+        val logViewDialog = LogViewDialog(mainUI, log.toString().trim(), caretPos, targetRowLen)
         logViewDialog.setLocationRelativeTo(mainUI)
         logViewDialog.isVisible = true
     }
@@ -379,6 +387,7 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
 
     internal inner class PopUpTable(point: Point) : JPopupMenu() {
         var mProcessItem: JMenuItem = JMenuItem("")
+        var mFilterProcessItem: JMenuItem = JMenuItem("")
         var mCopyItem: JMenuItem = JMenuItem("Copy")
         var mShowEntireItem = JMenuItem("Show entire line")
         var mBookmarkItem = JMenuItem("Bookmark")
@@ -390,6 +399,16 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         private val mActionHandler = ActionHandler()
 
         init {
+            //song
+            val row = rowAtPoint(point)
+            val pid = mTableModel.getValueProcess(row)
+            if (pid.isNotEmpty()) {
+                mFilterProcessItem.text = "Filter Pid:$pid"
+                mFilterProcessItem.toolTipText = pid
+                mFilterProcessItem.addActionListener(mActionHandler)
+                add(mFilterProcessItem)
+            }
+            //end
             val column: Int = columnAtPoint(point)
             if (ProcessList.UpdateTime > 0 && MainUI.CurrentMethod == MainUI.METHOD_ADB && column == 1) { // column == 1, not line number
                 val row: Int = rowAtPoint(point)
@@ -428,6 +447,12 @@ class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         internal inner class ActionHandler : ActionListener {
             override fun actionPerformed(p0: ActionEvent?) {
                 when (p0?.source) {
+                    mFilterProcessItem -> {
+                        val mainUI = MainUI.getInstance()
+                        mainUI.mShowPidCombo.setFilterText(mFilterProcessItem.toolTipText)
+                        mainUI.mShowPidToggle.isSelected = true
+                        mainUI.mShowPidCombo.applyFilterText(true)
+                    }
                     mCopyItem -> {
                         this@LogTable.processKeyEvent(KeyEvent(this@LogTable, KeyEvent.KEY_PRESSED, p0.`when`, KeyEvent.CTRL_MASK, KeyEvent.VK_C, 'C'))
                     }
