@@ -619,7 +619,7 @@ class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTableMo
 
             if (!suceess && mFilterLevel != LEVEL_NONE) {
                 val textSplited = line.trim().split(")")
-                if (textSplited.size >= 2 && textSplited[0].contains('/') && textSplited[0].contains(':')) {
+                if (textSplited.size >= 2 && textSplited[0].contains('/') && textSplited[1][0] == ':') {
                     val pattern = Regex("""([A-Z])/(.*)\(\s*(\d+)\s*$""")
                     val matchResult = pattern.find(textSplited[0])
                     if (matchResult != null) {
