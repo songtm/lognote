@@ -591,7 +591,7 @@ class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTableMo
             tag = ""
             pid = ""
             tid = ""
-
+            var suceess = false
             val textSplited = line.trim().split(Regex("\\s+"))
 
             if (mFilterLevel != LEVEL_NONE && textSplited.size > TAG_INDEX && textSplited[0][1] != '/') {
@@ -600,14 +600,27 @@ class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTableMo
                     tag = textSplited[TAG_INDEX]
                     pid = textSplited[PID_INDEX]
                     tid = textSplited[TID_INDEX]
+                    if (pid.contains('-')) {//song 特殊处理下!!
+                        val parts = pid.split('-')
+                        pid = parts[0]
+                        tid = parts[1]
+                        if (level == LEVEL_NONE) {
+                            level = levelToInt(textSplited[5])
+                            tag = textSplited[3]
+                        }
+                    }
+                    suceess = true
                 }
-                else if (Character.isAlphabetic(textSplited[PID_INDEX][0].code)) {
-                    level = levelToInt(textSplited[PID_INDEX][0].toString())
-                }
-            }  else if (mFilterLevel != LEVEL_NONE) {
-                val textSplited = line.trim().split(":")
-                if (textSplited.size >= 2 && textSplited[0][1] == '/') {
-                    val pattern = Regex("""([A-Z])/(.*)\(\s*(\d+)\s*\)""")
+//                else if (Character.isAlphabetic(textSplited[PID_INDEX][0].code)) {
+//                    level = levelToInt(textSplited[PID_INDEX][0].toString())
+//                    suceess = true
+//                }
+            }
+
+            if (!suceess && mFilterLevel != LEVEL_NONE) {
+                val textSplited = line.trim().split(")")
+                if (textSplited.size >= 2 && textSplited[0].contains('/') && textSplited[0].contains(':')) {
+                    val pattern = Regex("""([A-Z])/(.*)\(\s*(\d+)\s*$""")
                     val matchResult = pattern.find(textSplited[0])
                     if (matchResult != null) {
                         val (levelStr, tagStr, pidStr) = matchResult.destructured
