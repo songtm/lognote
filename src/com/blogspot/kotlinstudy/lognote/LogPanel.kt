@@ -302,6 +302,13 @@ class LogPanel(mainUI: MainUI, tableModel: LogTableModel, basePanel: LogPanel?, 
         } else {
             viewRect = mTable.getCellRect(idx, column, true)
         }
+        if (viewRect.maxY > mTable.visibleRect.maxY) {
+            viewRect.height += mTable.visibleRect.height / 2
+        }
+        if (viewRect.minY < mTable.visibleRect.minY) {
+            viewRect.y -= mTable.visibleRect.height / 2
+        }
+
         mTable.scrollRectToVisible(viewRect)
     }
 
