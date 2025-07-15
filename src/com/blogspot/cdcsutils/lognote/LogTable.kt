@@ -537,11 +537,10 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             if (isPlaneText) {
                 if (selectedRowCount == 1) {
                     if (row == targetRow) {
-                        caretPos = log.length
-                        if (log.isNotEmpty()) {
-                            caretPos += System.lineSeparator().length
-                        }
+                        val pre = "=======\n=======\n";
+                        caretPos = log.length + pre.length + System.lineSeparator().length
                         selectedLen = value.length
+                        value = "$pre$value\n=======\n======="
                     }
                 }
                 if (log.isEmpty()) {

@@ -343,6 +343,7 @@ class ToolsPane private constructor(): JTabbedPane() {
                     mTextComponent.highlighter.addHighlight(param.second, param.second + param.third, mSelectedBGPainter)
                 }
                 mTextComponent.caretPosition = param.second
+                if (param.third > 0) mTextComponent.select(param.second, param.second + param.third)
             }
             else {
                 mTextComponent.text = "<html>${param.first}</html>"
