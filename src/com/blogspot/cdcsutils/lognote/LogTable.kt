@@ -508,9 +508,10 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         return mTableModel.getValueAt(row, LogTableModel.COLUMN_LOG_START).toString()
     }
 
-    fun getSelectedLog(targetRow: Int, prevLines: Int, nextLines: Int, isPlaneText: Boolean): Pair<String, Int> {
+    fun getSelectedLog(targetRow: Int, prevLines: Int, nextLines: Int, isPlaneText: Boolean): Triple<String, Int, Int> {
         val log = StringBuilder("")
         var caretPos = 0
+        var caretPosEnd = 0
         var value:String
         var newValue:String
 
@@ -533,6 +534,13 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
 
         for (row in rows) {
             value = getLogText(row)
+            if (selectedRowCount <= 1 && row == targetRow) {
+                val pre = "=======\n=======\n";
+                caretPos = log.length + pre.length + System.lineSeparator().length
+                caretPosEnd = caretPos + value.length
+                value = "$pre$value\n=======\n======="
+
+            }
             if (isPlaneText) {
                 if (log.isEmpty()) {
                     log.append(value)
@@ -552,7 +560,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             }
         }
 
-        return Pair(log.toString(), caretPos)
+        return Triple(log.toString(), caretPos, caretPosEnd)
     }
 
     private fun showSelected(targetRow:Int) {
