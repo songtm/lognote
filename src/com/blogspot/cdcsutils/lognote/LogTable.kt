@@ -623,6 +623,8 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         var mFindAddItem = JMenuItem(Strings.ADD_FIND)
         var mFindSetItem = JMenuItem(Strings.SET_FIND)
         var mIncludeSetItem = JMenuItem(Strings.SET_INCLUDE)
+        var mFilterPidItem = JMenuItem("FilterPid")
+        var mFilterTagItem = JMenuItem("FilterTag")
         var mIncludeRemoveItem = JMenuItem(Strings.REMOVE_INCLUDE)
         var mCopyLineItem: JMenuItem = JMenuItem(Strings.COPY_SELECTED_LINES)
         var mCopyWordItem: JMenuItem = JMenuItem(Strings.COPY)
@@ -706,6 +708,13 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
 
             mSelectedWord = selectedWord.trim()
             if (mSelectedWord.isNotEmpty()) {
+                mFilterPidItem.text = "过滤进程:${mSelectedWord}"
+                mFilterPidItem.addActionListener(mActionHandler)
+                add(mFilterPidItem)
+                mFilterTagItem.text = "过滤Tag:${mSelectedWord}"
+                mFilterTagItem.addActionListener(mActionHandler)
+                add(mFilterTagItem)
+                addSeparator()
                 val prefix = "  - "
                 mSelectedTextItem.text = "\"$mSelectedWord\""
                 add(mSelectedTextItem)
@@ -727,6 +736,8 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                 mIncludeSetItem.text = "$prefix${Strings.SET_INCLUDE}"
                 mIncludeSetItem.addActionListener(mActionHandler)
                 add(mIncludeSetItem)
+
+
                 mIncludeRemoveItem.text = "$prefix${Strings.REMOVE_INCLUDE}"
                 mIncludeRemoveItem.addActionListener(mActionHandler)
                 add(mIncludeRemoveItem)
@@ -831,6 +842,12 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                             MainUI.getInstance().setTextShowLogCombo(mSelectedWord)
                             MainUI.getInstance().applyShowLogCombo(true)
                         }
+                    }
+                    mFilterPidItem -> {
+                        MainUI.getInstance().setTokenFilterText(mSelectedWord, "PID")
+                    }
+                    mFilterTagItem -> {
+                        MainUI.getInstance().setTokenFilterText(mSelectedWord, "Tag")
                     }
                     mIncludeRemoveItem -> {
                         MainUI.getInstance().removeIncludeFilterShowLogCombo(mSelectedWord)
