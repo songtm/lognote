@@ -156,7 +156,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     private lateinit var mTokenPanel: Array<JPanel>
     lateinit var mTokenCombo: Array<FilterComboBox>
     var mTokenComboStyle: Array<FilterComboBox.Mode>
-    private lateinit var mTokenToggle: Array<FilterToggleButton>
+    lateinit var mTokenToggle: Array<FilterToggleButton>
     private lateinit var mTokenTogglePanel: Array<JPanel>
 
     private lateinit var mLogCmdCombo: ColorComboBox<String>

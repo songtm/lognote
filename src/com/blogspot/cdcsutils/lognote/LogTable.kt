@@ -621,6 +621,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         var mFindAddItem = JMenuItem(Strings.ADD_FIND)
         var mFindSetItem = JMenuItem(Strings.SET_FIND)
         var mIncludeSetItem = JMenuItem(Strings.SET_INCLUDE)
+        var mSetPidItem = JMenuItem("SetPid")
         var mIncludeRemoveItem = JMenuItem(Strings.REMOVE_INCLUDE)
         var mCopyLineItem: JMenuItem = JMenuItem(Strings.COPY_SELECTED_LINES)
         var mCopyWordItem: JMenuItem = JMenuItem(Strings.COPY)
@@ -704,6 +705,10 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
 
             mSelectedWord = selectedWord.trim()
             if (mSelectedWord.isNotEmpty()) {
+                mSetPidItem.text = "过滤进程:${mSelectedWord}"
+                mSetPidItem.addActionListener(mActionHandler)
+                add(mSetPidItem)
+
                 val prefix = "  - "
                 mSelectedTextItem.text = "\"$mSelectedWord\""
                 add(mSelectedTextItem)
@@ -725,6 +730,8 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                 mIncludeSetItem.text = "$prefix${Strings.SET_INCLUDE}"
                 mIncludeSetItem.addActionListener(mActionHandler)
                 add(mIncludeSetItem)
+
+
                 mIncludeRemoveItem.text = "$prefix${Strings.REMOVE_INCLUDE}"
                 mIncludeRemoveItem.addActionListener(mActionHandler)
                 add(mIncludeRemoveItem)
@@ -828,6 +835,18 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                         if (mSelectedWord.isNotEmpty()) {
                             MainUI.getInstance().setTextShowLogCombo(mSelectedWord)
                             MainUI.getInstance().applyShowLogCombo(true)
+                        }
+                    }
+                    mSetPidItem -> {
+                        if (mSelectedWord.isNotEmpty()) {
+                            val mainUI = MainUI.getInstance()
+                            for ((index, toggleButton) in mainUI.mTokenToggle.withIndex()) {
+                                if (toggleButton.text == "PID") {
+                                    toggleButton.isSelected = true
+                                    mainUI.mTokenCombo[index].setFilterText(mSelectedWord)
+                                    mainUI.mFilteredLogPanel.mTableModel.mFilterTokenMgr.set(index, mSelectedWord)
+                                }
+                            }
                         }
                     }
                     mIncludeRemoveItem -> {
