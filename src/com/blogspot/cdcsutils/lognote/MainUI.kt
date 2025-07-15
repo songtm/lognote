@@ -156,7 +156,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     private lateinit var mTokenPanel: Array<JPanel>
     lateinit var mTokenCombo: Array<FilterComboBox>
     var mTokenComboStyle: Array<FilterComboBox.Mode>
-    private lateinit var mTokenToggle: Array<FilterToggleButton>
+    lateinit var mTokenToggle: Array<FilterToggleButton>
     private lateinit var mTokenTogglePanel: Array<JPanel>
 
     private lateinit var mLogCmdCombo: ColorComboBox<String>
@@ -3202,6 +3202,17 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         return mFindPanel.mFindCombo.selectedItem!!.toString()
     }
 
+    fun setTokenFilterText(text: String, tokenTag:String = "PID") {
+        if (text.isNotEmpty()) {
+            for ((index, toggleButton) in mTokenToggle.withIndex()) {
+                if (toggleButton.text == tokenTag) {
+                    toggleButton.isSelected = true
+                    mTokenCombo[index].setFilterText(text)
+                    mFilteredLogPanel.mTableModel.mFilterTokenMgr.set(index, text)
+                }
+            }
+        }
+    }
     fun setTextFindCombo(text : String) {
         mFindPanel.mFindCombo.selectedItem = text
         mFilteredLogPanel.mTableModel.mFilterFindLog = mFindPanel.mFindCombo.selectedItem!!.toString()
