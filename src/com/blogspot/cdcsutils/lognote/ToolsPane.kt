@@ -327,7 +327,7 @@ class ToolsPane private constructor(): JTabbedPane() {
             mTextComponent.background = logBG
         }
 
-        fun setSelectionLog(pair: Pair<String, Int>) {
+        fun setSelectionLog(pair: Triple<String, Int, Int>) {
             mTextComponent.font = MainUI.getInstance().mFont
             if (mIsPlainText) {
                 mTextComponent.text = pair.first
@@ -336,6 +336,7 @@ class ToolsPane private constructor(): JTabbedPane() {
                 mTextComponent.text = "<html>${pair.first}</html>"
             }
             mTextComponent.caretPosition = pair.second
+            if (pair.second < pair.third) mTextComponent.select(pair.second, pair.third)
         }
 
         fun isVisiblePopupMenu(): Boolean {
