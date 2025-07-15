@@ -72,4 +72,19 @@ class BookmarkManager private constructor(){
             listener.bookmarkChanged(BookmarkEvent(BookmarkEvent.REMOVED))
         }
     }
+    fun getNextBookmark(row: Int): Int {
+        if (mBookmarks.isEmpty()) return -1
+        for (bookmark in mBookmarks) {
+            if (row < bookmark) return bookmark
+        }
+        return mBookmarks[0]
+    }
+
+    fun getPrevBookmark(row: Int): Int {
+        if (mBookmarks.isEmpty()) return -1
+        for (bookmark in mBookmarks.reversed()) {
+            if (row > bookmark) return bookmark
+        }
+        return mBookmarks.last()
+    }
 }
