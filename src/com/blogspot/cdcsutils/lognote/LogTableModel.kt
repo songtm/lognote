@@ -80,7 +80,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
 
     private var mTableColor: ColorManager.TableColor
     private val mColumnNames = arrayOf("Line", "Process", "Log")
-    protected var mLogItems:MutableList<LogItem> = mutableListOf()
+    var mLogItems:MutableList<LogItem> = mutableListOf()
     private var mBaseModel:LogTableModel? = baseModel
     var mLogFile:File? = null
     private val mLogCmdManager = LogCmdManager.getInstance()
