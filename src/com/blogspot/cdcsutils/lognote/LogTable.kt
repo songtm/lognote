@@ -1040,7 +1040,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         override fun keyPressed(p0: KeyEvent?) {
             ToolTipManager.sharedInstance().mouseMoved(MouseEvent(this@LogTable, 0, 0, 0, 0, 0, 0, false))
             if (p0?.isControlDown == true) {
-                if (p0.keyCode == KeyEvent.VK_B) {
+                if (p0.keyCode == KeyEvent.VK_B || p0.keyCode == KeyEvent.VK_F2) {
                     updateBookmark(selectedRow)
                 }
             }
@@ -1060,6 +1060,16 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                     }
                     KeyEvent.VK_ENTER -> {
                         showSelected(selectedRow)
+                    }
+                    KeyEvent.VK_F2 -> {
+                        val mainUI = MainUI.getInstance()
+                        val value = mTableModel.getValueAt(selectedRow, 0)
+                        val row = value.toString().trim().toInt()
+                        if (p0.isShiftDown) {
+                            mainUI.mFilteredLogPanel.goToRowByFullLineNum(BookmarkManager.getInstance().getPrevBookmark(row), -1)
+                        } else {
+                            mainUI.mFilteredLogPanel.goToRowByFullLineNum(BookmarkManager.getInstance().getNextBookmark(row), -1)
+                        }
                     }
                 }
             }

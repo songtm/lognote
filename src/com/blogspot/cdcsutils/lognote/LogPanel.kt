@@ -361,6 +361,13 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
         } else {
             viewRect = mTable.getCellRect(idx, column, true)
         }
+        if (viewRect.maxY > mTable.visibleRect.maxY) {
+            viewRect.height += mTable.visibleRect.height / 2
+        }
+        if (viewRect.minY < mTable.visibleRect.minY) {
+            viewRect.y -= mTable.visibleRect.height / 2
+        }
+
         mTable.scrollRectToVisible(viewRect)
     }
 
@@ -373,6 +380,15 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
 
         goToRow(idx, column)
     }
+
+    fun goToRowByFullLineNum(num: Int, column: Int) {
+        val logItems = mTable.mTableModel.mLogItems
+        val index: Int = logItems.binarySearch { logItem -> logItem.mNum.toInt() - num }
+        if (index >= 0) {
+            goToRow(index, column)
+        }
+    }
+
 
     fun setGoToLast(value: Boolean) {
         mTable.mTableModel.mGoToLast = value
