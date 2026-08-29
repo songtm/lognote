@@ -1695,17 +1695,17 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             }
         }
 
-        if (!mItemFull.state) {
-            windowedModeLogPanel(mFullLogPanel)
-            mItemFullLogToNewWindow.state = true
-        }
-
         mFilteredLogPanel.mTableModel.mScrollback = scrollback
         mFilteredLogPanel.mTableModel.mScrollbackSplitFile = mScrollbackSplitFileToggle.isSelected
         mFilteredLogPanel.mTableModel.mMatchCase = mMatchCaseToggle.isSelected
         mFilteredLogPanel.mTableModel.mFindMatchCase = mFindPanel.mFindMatchCaseToggle.isSelected
 
         rotateLogSplitPane(false)
+
+        if (!mItemFull.state) {
+            windowedModeLogPanel(mFullLogPanel)
+            mItemFullLogToNewWindow.state = true
+        }
 
         mStatusTF.text = Strings.NONE
         mStatusMethod.text = ""
