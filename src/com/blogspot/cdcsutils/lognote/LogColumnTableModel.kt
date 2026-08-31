@@ -85,7 +85,7 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
         }
     }
 
-    override fun makeLogItem(num: Int, logLine: String): LogItem {
+    override fun makeLogItem(num: Int, logLine: String, prevLevel: Int): LogItem {
         val level: Int
         val tokenFilterLogs: Array<String>
         val tokenLogs: List<String>?
@@ -93,10 +93,10 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
 
         val textSplited = FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList)
         if (textSplited.size == mTokenCount) {
-            level = if (mFilterLevel == LEVEL_NONE) {
-                LEVEL_NONE
-            } else {
+            level = if (mLevelIdx >= 0) {
                 mLevelMap[textSplited[mLevelIdx]] ?: LEVEL_NONE
+            } else {
+                LEVEL_NONE
             }
             tokenFilterLogs = Array(mSortedTokenFilters.size) {
                 if (mSortedTokenFilters[it].mPosition >= 0) {
@@ -108,7 +108,12 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
             log = textSplited[mLogNth]
             tokenLogs = textSplited
         } else {
-            level = LEVEL_NONE
+            // continuation line : inherit the level of the previous log line, but keep blank lines unleveled
+            level = if (logLine.isEmpty()) {
+                LEVEL_NONE
+            } else {
+                prevLevel
+            }
             tokenFilterLogs = mEmptyTokenFilters
             log = logLine
             tokenLogs = null

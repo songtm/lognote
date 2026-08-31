@@ -540,9 +540,11 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         }
 
         var num = 0
+        var prevLevel = LEVEL_NONE
         if (isAppend) {
             if (mLogItems.size > 0) {
                 val item = mLogItems.last()
+                prevLevel = item.mLevel
                 num = item.mNum.toInt()
                 num++
                 mLogItems.add(LogItem(num.toString(), "LogNote - APPEND LOG : $mLogFile", LEVEL_ERROR, mEmptyTokenFilters, null, null))
@@ -559,7 +561,9 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
 
         line = bufferedReader.readLine()
         while (line != null) {
-            mLogItems.add(makeLogItem(num, line))
+            val item = makeLogItem(num, line, prevLevel)
+            prevLevel = item.mLevel
+            mLogItems.add(item)
             num++
             line = bufferedReader.readLine()
         }
@@ -995,16 +999,16 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
     inner class LogItem(val mNum: String, val mLogLine: String, val mLevel: Int, val mTokenFilterLogs: Array<String>, val mTokenLogs: List<String>?, val mProcessName: String?) {
     }
 
-    open fun makeLogItem(num: Int, logLine: String): LogItem {
+    open fun makeLogItem(num: Int, logLine: String, prevLevel: Int): LogItem {
         val level: Int
         val tokenFilterLogs: Array<String>
 
         val textSplited = FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList)
         if (textSplited.size > mTokenNthMax) {
-            level = if (mFilterLevel == LEVEL_NONE) {
-                LEVEL_NONE
-            } else {
+            level = if (mLevelIdx >= 0) {
                 mLevelMap[textSplited[mLevelIdx]] ?: LEVEL_NONE
+            } else {
+                LEVEL_NONE
             }
 
             tokenFilterLogs = Array(mSortedTokenFilters.size) {
@@ -1016,7 +1020,13 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                 }
             }
         } else {
-            level = LEVEL_NONE
+            // continuation line : inherit the level of the previous log line, but keep blank lines unleveled
+//            level = if (logLine.isEmpty()) {
+//                LEVEL_NONE
+//            } else {
+//                prevLevel
+//            }
+            level = prevLevel
             tokenFilterLogs = mEmptyTokenFilters
         }
 
@@ -1196,7 +1206,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                         isShow = true
 
                         if (!mFullMode) {
-                            if (item.mLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
+                            if (mFilterLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
                                 isShow = false
                             }
                             else if ((mFilterHideLog.isNotEmpty() && mPatternHideLog.matcher(item.mLogLine).find())
@@ -1279,8 +1289,10 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         var item: LogItem
         val logFilterItems: MutableList<LogFilterItem> = mutableListOf()
         synchronized(this) {
+            var prevLevel = mBaseModel!!.mLogItems.lastOrNull()?.mLevel ?: LEVEL_NONE
             for (tempLine in logLines) {
-                item = makeLogItem(num, tempLine)
+                item = makeLogItem(num, tempLine, prevLevel)
+                prevLevel = item.mLevel
                 isShow = true
 
                 if (mBookmarkMode) {
@@ -1288,7 +1300,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                 }
 
                 if (!mFullMode) {
-                    if (isShow && item.mLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
+                    if (isShow && mFilterLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
                         isShow = false
                     }
                     if (isShow
