@@ -552,11 +552,11 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
             }
         } else {
             mLogItems.clear()
-            mLogItems = mutableListOf()
+            mLogItems = ArrayList<LogItem>(estimateLineCount(mLogFile!!))
             mBookmarkManager.clear()
         }
 
-        val bufferedReader = BufferedReader(FileReader(mLogFile!!))
+        val bufferedReader = BufferedReader(FileReader(mLogFile!!), 1 shl 20)
         var line: String?
 
         line = bufferedReader.readLine()
@@ -569,6 +569,11 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         }
 
         fireLogTableDataChanged()
+    }
+
+    private fun estimateLineCount(file: File): Int {
+        // 按平均行长估算,低估只会多几次扩容,不影响正确性;上限避免极端大文件预分配过大
+        return ((file.length() / 200) + 1).coerceIn(1024, 20_000_000).toInt()
     }
 
     private fun fireLogTableDataChanged(flags: Int) {

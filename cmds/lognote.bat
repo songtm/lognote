@@ -1,2 +1,2 @@
-start javaw -Dfile.encoding=utf8 -Xmx1024m -jar LogNote.jar
+start javaw -Dfile.encoding=utf8 -Xmx8g -jar LogNote.jar
 

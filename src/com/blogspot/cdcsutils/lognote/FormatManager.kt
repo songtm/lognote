@@ -129,16 +129,21 @@ class FormatManager private constructor(fileName: String) : PropertiesBase(fileN
 
         const val SEPARATOR_DELIMITER = ":::SEPARATOR:::"
 
+        private val mRegexCache = java.util.concurrent.ConcurrentHashMap<String, Regex>()
+
+        private fun cachedRegex(pattern: String): Regex =
+            mRegexCache.computeIfAbsent(pattern) { Regex(it) }
+
         fun splitLog(line: String, tokenCount: Int, separator: String, separatorList: List<String>?): List<String> {
             if (separatorList == null) {
-                return line.split(Regex(separator), tokenCount)
+                return line.split(cachedRegex(separator), tokenCount)
             }
             else {
                 var remainingLine = line
                 val splitedLine: MutableList<String> = mutableListOf()
                 var tmpSplited: List<String>
                 for (item in separatorList) {
-                    tmpSplited = remainingLine.split(Regex(item), 2)
+                    tmpSplited = remainingLine.split(cachedRegex(item), 2)
                     splitedLine.add(tmpSplited[0])
                     if (tmpSplited.size > 1) {
                         remainingLine = tmpSplited[1]

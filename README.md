@@ -31,9 +31,9 @@ Mac : export LOGNOTE_HOME=\~/lognote
 <br/>
 
 # Run
-Windows : start javaw -Dfile.encoding=utf8 -Xmx1024m -jar LogNote.jar\
-Linux : java -Dfile.encoding=utf8 -Xmx2048m -jar LogNote.jar\
-Mac : java -Dfile.encoding=utf8 -Xmx2048m -jar LogNote.jar
+Windows : start javaw -Dfile.encoding=utf8 -Xmx8g -jar LogNote.jar\
+Linux : java -Dfile.encoding=utf8 -Xmx8g -jar LogNote.jar\
+Mac : java -Dfile.encoding=utf8 -Xmx8g -jar LogNote.jar
 
 <br/>
 

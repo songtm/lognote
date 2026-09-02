@@ -1,3 +1,5 @@
 # Default ignored files
 /out
 /config.xml
+/.idea/claudeCodeTabState.xml
+/logs/
