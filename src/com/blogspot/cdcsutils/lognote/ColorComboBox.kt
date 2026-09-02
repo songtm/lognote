@@ -7,6 +7,7 @@ import java.awt.event.ItemEvent
 import java.awt.event.KeyEvent
 import javax.swing.*
 import javax.swing.plaf.basic.BasicComboBoxRenderer
+import com.formdev.flatlaf.util.UIScale
 import kotlin.math.max
 
 
@@ -20,7 +21,7 @@ class ColorComboBox<E>(autoResize:Boolean = false, minWidth:Int = 0) : JComboBox
                 if (e.stateChange == ItemEvent.SELECTED) {
                     val selectedItem = e.item as String
                     val fm = getFontMetrics(font)
-                    val width = max(fm.stringWidth(selectedItem) + insets.left + insets.right + 40, minWidth)
+                    val width = max(fm.stringWidth(selectedItem) + insets.left + insets.right + UIScale.scale(40), minWidth)
                     preferredSize = Dimension(width, preferredSize.height)
                     revalidate()
                 }
