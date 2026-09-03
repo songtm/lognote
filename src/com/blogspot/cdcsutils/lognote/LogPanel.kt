@@ -107,8 +107,8 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
 
         mBookmarkManager.addBookmarkEventListener(mBookmarkHandler)
 
-        mScrollPane.verticalScrollBar.setUI(BasicScrollBarUI())
-        mScrollPane.horizontalScrollBar.setUI(BasicScrollBarUI())
+        mScrollPane.verticalScrollBar.setUI(MinThumbScrollBarUI())
+        mScrollPane.horizontalScrollBar.setUI(MinThumbScrollBarUI())
         mScrollPane.verticalScrollBar.unitIncrement = 20
 
         mScrollPane.verticalScrollBar.addAdjustmentListener(mAdjustmentHandler)
@@ -852,5 +852,11 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
             Utils.printlnLog("mouseDragged")
             super.mouseDragged(e)
         }
+    }
+}
+
+private class MinThumbScrollBarUI : BasicScrollBarUI() {
+    override fun getMinimumThumbSize(): Dimension {
+        return Dimension(30, 30)
     }
 }
