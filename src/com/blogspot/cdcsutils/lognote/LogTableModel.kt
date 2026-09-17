@@ -1001,15 +1001,17 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         return stringBuilder.toString()
     }
 
-    inner class LogItem(val mNum: String, val mLogLine: String, val mLevel: Int, val mTokenFilterLogs: Array<String>, val mTokenLogs: List<String>?, val mProcessName: String?) {
+    inner class LogItem(val mNum: String, val mLogLine: String, val mLevel: Int, val mTokenFilterLogs: Array<String>, val mTokenLogs: List<String>?, val mProcessName: String?, val mIsNormal: Boolean = false) {
     }
 
     open fun makeLogItem(num: Int, logLine: String, prevLevel: Int): LogItem {
         val level: Int
         val tokenFilterLogs: Array<String>
+        val isNormal: Boolean
 
         val textSplited = FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList)
         if (textSplited.size > mTokenNthMax) {
+            isNormal = true
             level = if (mLevelIdx >= 0) {
                 mLevelMap[textSplited[mLevelIdx]] ?: LEVEL_NONE
             } else {
@@ -1026,6 +1028,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
             }
         } else {
             // continuation line : inherit the level of the previous log line, but keep blank lines unleveled
+            isNormal = false
 //            level = if (logLine.isEmpty()) {
 //                LEVEL_NONE
 //            } else {
@@ -1041,7 +1044,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
             null
         }
 
-        return LogItem(num.toString(), logLine, level, tokenFilterLogs, null, processName)
+        return LogItem(num.toString(), logLine, level, tokenFilterLogs, null, processName, isNormal)
     }
 
     private fun makePattenPrintValue() {
@@ -1203,6 +1206,8 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                     val normalShowLogSplit = normalShowLog.split("|")
 
                     Utils.printlnLog("Show Log $normalShowLog, $regexShowLog")
+                    // 非正常日志(换行/空行等)的过滤结果以上一条正常日志的过滤结果为准
+                    var prevIsShow = true
                     for (item in mBaseModel!!.mLogItems) {
                         if (mIsFilterUpdated) {
                             break
@@ -1211,48 +1216,54 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                         isShow = true
 
                         if (!mFullMode) {
-                            if (mFilterLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
-                                isShow = false
-                            }
-                            else if ((mFilterHideLog.isNotEmpty() && mPatternHideLog.matcher(item.mLogLine).find())
-                                || isMatchHideToken(item)) {
-                                isShow = false
-                            }
-                            else if (mFilterShowLog.isNotEmpty()) {
-                                var isFound = false
-                                if (normalShowLog.isNotEmpty()) {
-                                    val logLine = if (mPatternCase == Pattern.CASE_INSENSITIVE) {
-                                        item.mLogLine.uppercase()
-                                    } else {
-                                        item.mLogLine
-                                    }
-                                    for (sp in normalShowLogSplit) {
-                                        if (logLine.contains(sp)) {
-                                            isFound = true
-                                            break
-                                        }
-                                    }
-                                }
-
-                                if (!isFound) {
-                                    if (regexShowLog.isEmpty()) {
-                                        isShow = false
-                                    }
-                                    else {
-                                        matcherShowLog.reset(item.mLogLine)
-                                        if (!matcherShowLog.find()) {
-                                            isShow = false
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (isShow) {
-                                if (isNotMatchShowToken(item)) {
+                            if (item.mIsNormal) {
+                                if (mFilterLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
                                     isShow = false
                                 }
+                                else if ((mFilterHideLog.isNotEmpty() && mPatternHideLog.matcher(item.mLogLine).find())
+                                    || isMatchHideToken(item)) {
+                                    isShow = false
+                                }
+                                else if (mFilterShowLog.isNotEmpty()) {
+                                    var isFound = false
+                                    if (normalShowLog.isNotEmpty()) {
+                                        val logLine = if (mPatternCase == Pattern.CASE_INSENSITIVE) {
+                                            item.mLogLine.uppercase()
+                                        } else {
+                                            item.mLogLine
+                                        }
+                                        for (sp in normalShowLogSplit) {
+                                            if (logLine.contains(sp)) {
+                                                isFound = true
+                                                break
+                                            }
+                                        }
+                                    }
+
+                                    if (!isFound) {
+                                        if (regexShowLog.isEmpty()) {
+                                            isShow = false
+                                        }
+                                        else {
+                                            matcherShowLog.reset(item.mLogLine)
+                                            if (!matcherShowLog.find()) {
+                                                isShow = false
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (isShow) {
+                                    if (isNotMatchShowToken(item)) {
+                                        isShow = false
+                                    }
+                                }
+                            }
+                            else {
+                                isShow = prevIsShow
                             }
                         }
+                        prevIsShow = isShow
 
                         if (isShow || mBookmarkManager.mBookmarks.contains(item.mNum.toInt())) {
                             logItems.add(item)
@@ -1294,6 +1305,8 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         var item: LogItem
         val logFilterItems: MutableList<LogFilterItem> = mutableListOf()
         synchronized(this) {
+            // 非正常日志(换行/空行等)的过滤结果以上一条正常日志的过滤结果为准
+            var prevIsShow = true
             var prevLevel = mBaseModel!!.mLogItems.lastOrNull()?.mLevel ?: LEVEL_NONE
             for (tempLine in logLines) {
                 item = makeLogItem(num, tempLine, prevLevel)
@@ -1305,23 +1318,29 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                 }
 
                 if (!mFullMode) {
-                    if (isShow && mFilterLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
-                        isShow = false
+                    if (item.mIsNormal) {
+                        if (isShow && mFilterLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
+                            isShow = false
+                        }
+                        if (isShow
+                            && ((mFilterHideLog.isNotEmpty() && mPatternHideLog.matcher(item.mLogLine)
+                                .find())
+                                    || (mFilterShowLog.isNotEmpty() && !mPatternShowLog.matcher(item.mLogLine)
+                                    .find()))
+                        ) {
+                            isShow = false
+                        }
+                        if (isShow
+                            && (isMatchHideToken(item) || isNotMatchShowToken(item))
+                        ) {
+                            isShow = false
+                        }
                     }
-                    if (isShow
-                        && ((mFilterHideLog.isNotEmpty() && mPatternHideLog.matcher(item.mLogLine)
-                            .find())
-                                || (mFilterShowLog.isNotEmpty() && !mPatternShowLog.matcher(item.mLogLine)
-                            .find()))
-                    ) {
-                        isShow = false
-                    }
-                    if (isShow
-                        && (isMatchHideToken(item) || isNotMatchShowToken(item))
-                    ) {
-                        isShow = false
+                    else {
+                        isShow = prevIsShow
                     }
                 }
+                prevIsShow = isShow
                 logFilterItems.add(LogFilterItem(item, isShow))
                 num++
             }
