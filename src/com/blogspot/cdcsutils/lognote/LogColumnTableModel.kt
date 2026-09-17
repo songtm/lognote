@@ -90,9 +90,11 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
         val tokenFilterLogs: Array<String>
         val tokenLogs: List<String>?
         val log: String
+        val isNormal: Boolean
 
         val textSplited = FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList)
         if (textSplited.size == mTokenCount) {
+            isNormal = true
             level = if (mLevelIdx >= 0) {
                 mLevelMap[textSplited[mLevelIdx]] ?: LEVEL_NONE
             } else {
@@ -109,6 +111,7 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
             tokenLogs = textSplited
         } else {
             // continuation line : inherit the level of the previous log line, but keep blank lines unleveled
+            isNormal = false
             level = if (logLine.isEmpty()) {
                 LEVEL_NONE
             } else {
@@ -125,7 +128,7 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
             null
         }
 
-        return LogItem(num.toString(), log, level, tokenFilterLogs, tokenLogs, processName)
+        return LogItem(num.toString(), log, level, tokenFilterLogs, tokenLogs, processName, isNormal)
     }
 
     override fun getPatternPrintFilter(col: Int): Pattern? {
