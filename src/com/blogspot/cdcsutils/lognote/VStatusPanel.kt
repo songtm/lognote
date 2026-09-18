@@ -48,10 +48,17 @@ class VStatusPanel(logTable: LogTable) : JPanel() {
         else {
             g?.color = Color(0x000000)
         }
-        for (row in 0 until mLogTable.rowCount) {
-            val num = mLogTable.getValueAt(row, 0).toString().trim().toInt()
-            if (mBookmarkManager.mBookmarks.contains(num)) {
-                g?.fillRect(0, row * height / mLogTable.rowCount, width, 1)
+        // 只遍历书签(数量通常很少)并通过二分查找定位行号,
+        // 避免大文件下每次滚动重绘都遍历全部行(300 万行时每帧 O(N) 导致滚动卡顿)
+        val rowCount = mLogTable.rowCount
+        if (rowCount > 0 && height > 0 && mBookmarkManager.mBookmarks.isNotEmpty()) {
+            val logItems = mLogTable.mTableModel.mLogItems
+            for (num in mBookmarkManager.mBookmarks) {
+                val idx = logItems.binarySearch { logItem -> logItem.mNum.toInt() - num }
+                if (idx in 0 until rowCount) {
+                    val y = (idx.toLong() * height / rowCount).toInt()
+                    g?.fillRect(0, y, width, 1)
+                }
             }
         }
 
