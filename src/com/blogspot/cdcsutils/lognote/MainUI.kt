@@ -2337,7 +2337,8 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mPauseToggle.isSelected = false
         setSaveLogFile()
         if (reconnect) {
-            PackageManager.getInstance().updateUids(mFullLogPanel.mPackageBtns)
+            val packageBtns = if (mItemFull.state) mFullLogPanel.mPackageBtns else mFilteredLogPanel.mPackageBtns
+            PackageManager.getInstance().updateUids(packageBtns)
             mLogCmdManager.startLogcat()
         }
         mFilteredLogPanel.mTableModel.startScan()

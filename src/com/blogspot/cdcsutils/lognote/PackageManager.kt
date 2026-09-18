@@ -4,11 +4,15 @@ import java.awt.*
 import java.awt.event.*
 import java.util.*
 import java.util.Collections.sort
+import java.util.regex.Pattern
 import javax.swing.*
 import javax.swing.border.Border
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 import javax.swing.plaf.basic.BasicScrollBarUI
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.DefaultTableModel
+import javax.swing.table.TableRowSorter
 
 
 data class PackageItem(val mPackageName: String, var mUid: String, var mIsShow: Boolean, var mIsSelected: Boolean)
@@ -181,11 +185,13 @@ class PackageManager private constructor() {
         private var mOkBtn : JButton
         private var mCloseBtn : JButton
         private val mCellRenderer = PackageCellRenderer()
+        private val mSearchTF = JTextField()
+        private var mSorter: TableRowSorter<DefaultTableModel>? = null
 
         init {
             val columnNames = arrayOf("Num", "Package", "UID", "Show")
 
-            val model = object: DefaultTableModel(mPackageArray, columnNames) {
+            val model: DefaultTableModel = object: DefaultTableModel(mPackageArray, columnNames) {
                 override fun isCellEditable(row: Int, column: Int): Boolean {
                     return false
                 }
@@ -207,6 +213,8 @@ class PackageManager private constructor() {
             }
 
             mTable = JTable(model)
+            mSorter = TableRowSorter(model)
+            mTable.rowSorter = mSorter
             mTable.addMouseListener(MouseHandler())
             mTable.addKeyListener(KeyHandler())
             mTable.setShowGrid(true)
@@ -245,10 +253,26 @@ class PackageManager private constructor() {
             val panel = JPanel()
             panel.layout = BorderLayout()
 
+            val topPanel = JPanel()
+            topPanel.layout = BorderLayout()
+
             val label = JLabel(" * ${Strings.SELECT_UNSELECT_PACKAGE}")
             label.preferredSize = Dimension(label.preferredSize.width, 40)
-            panel.add(label, BorderLayout.NORTH)
+            topPanel.add(label, BorderLayout.NORTH)
 
+            val searchPanel = JPanel()
+            searchPanel.layout = BorderLayout(5, 0)
+            searchPanel.border = BorderFactory.createEmptyBorder(0, 5, 5, 5)
+            searchPanel.add(JLabel(Strings.FILTER), BorderLayout.WEST)
+            mSearchTF.document.addDocumentListener(object : DocumentListener {
+                override fun insertUpdate(e: DocumentEvent?) { updateFilter() }
+                override fun removeUpdate(e: DocumentEvent?) { updateFilter() }
+                override fun changedUpdate(e: DocumentEvent?) { updateFilter() }
+            })
+            searchPanel.add(mSearchTF, BorderLayout.CENTER)
+            topPanel.add(searchPanel, BorderLayout.SOUTH)
+
+            panel.add(topPanel, BorderLayout.NORTH)
             panel.add(mScrollPane, BorderLayout.CENTER)
 
             val btnPanel = JPanel()
@@ -261,6 +285,16 @@ class PackageManager private constructor() {
             pack()
 
             Utils.installKeyStrokeEscClosing(this)
+        }
+
+        private fun updateFilter() {
+            val text = mSearchTF.text.trim()
+            val sorter = mSorter ?: return
+            sorter.rowFilter = if (text.isEmpty()) {
+                null
+            } else {
+                RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 2)
+            }
         }
 
         internal inner class MouseHandler : MouseAdapter() {

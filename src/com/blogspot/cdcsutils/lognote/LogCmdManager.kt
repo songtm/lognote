@@ -326,43 +326,18 @@ class LogCmdManager private constructor(){
                     } catch (e:IOException) {
                         Utils.printlnLog("Failed run $cmd")
                         e.printStackTrace()
-                        val adbEvent = AdbEvent(CMD_GET_PROCESSES, EVENT_FAIL)
+                        val adbEvent = AdbEvent(CMD_GET_PACKAGES, EVENT_FAIL)
                         sendEvent(adbEvent)
                         return@run
                     }
 
-                    val thread = Thread {
-                        try {
-                            var line:String
-                            while (scanner.hasNextLine()) {
-                                line = scanner.nextLine()
-                                val textSplit = line.trim().split(Regex("\\s+|:"))
-                                if (textSplit.size == 4) {
-                                    mPackageManager.add(PackageItem(textSplit[1], textSplit[3], mIsShow = false, mIsSelected = true))
-                                }
-                            }
-                        } catch (e: InterruptedException) {
-                            Utils.printlnLog("Failed get package list")
-                            mPackageManager.clear()
+                    var line:String
+                    while (scanner.hasNextLine()) {
+                        line = scanner.nextLine()
+                        val textSplit = line.trim().split(Regex("\\s+|:"))
+                        if (textSplit.size == 4) {
+                            mPackageManager.add(PackageItem(textSplit[1], textSplit[3], mIsShow = false, mIsSelected = true))
                         }
-                    }
-                    thread.start()
-
-                    try {
-                        thread.join(1000)
-                        if (thread.isAlive) {
-                            thread.interrupt()
-                        }
-                    } catch (ex: InterruptedException) {
-                        Utils.printlnLog("get packages join : InterruptedException, throw exception")
-                        throw ex
-                    }
-
-                    for (i in 0 until 10) {
-                        if (!thread.isAlive) {
-                            break
-                        }
-                        Thread.sleep(100)
                     }
 
                     val adbEvent = AdbEvent(CMD_GET_PACKAGES, EVENT_SUCCESS)
