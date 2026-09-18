@@ -530,6 +530,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
             mBaseModel!!.fireLogTableDataCleared()
 
             mIsFilterUpdated = true
+            FormatManager.clearTokenPool()
             System.gc()
         }
     }
@@ -549,15 +550,16 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
             if (mLogItems.size > 0) {
                 val item = mLogItems.last()
                 prevLevel = item.mLevel
-                num = item.mNum.toInt()
+                num = item.mNum
                 num++
-                mLogItems.add(LogItem(num.toString(), "LogNote - APPEND LOG : $mLogFile", LEVEL_ERROR, mEmptyTokenFilters, null, null))
+                mLogItems.add(LogItem(num, "LogNote - APPEND LOG : $mLogFile", LEVEL_ERROR, mEmptyTokenFilters, null, null))
                 num++
             }
         } else {
             mLogItems.clear()
             mLogItems = ArrayList<LogItem>(estimateLineCount(mLogFile!!))
             mBookmarkManager.clear()
+            FormatManager.clearTokenPool()
         }
 
         val bufferedReader = BufferedReader(FileReader(mLogFile!!), 1 shl 20)
@@ -648,7 +650,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                 val logItem = mLogItems[rowIndex]
                 when (columnIndex) {
                     COLUMN_NUM -> {
-                        return logItem.mNum + " "
+                        return logItem.mNum.toString() + " "
                     }
                     COLUMN_PROCESS_NAME -> {
                         if (TypeShowProcessName != SHOW_PROCESS_NONE) {
@@ -1033,7 +1035,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         return stringBuilder.toString()
     }
 
-    inner class LogItem(val mNum: String, val mLogLine: String, val mLevel: Int, val mTokenFilterLogs: Array<String>, val mTokenLogs: List<String>?, val mProcessName: String?, val mIsNormal: Boolean = false) {
+    inner class LogItem(val mNum: Int, val mLogLine: String, val mLevel: Int, val mTokenFilterLogs: Array<String>, val mTokenLogs: List<String>?, val mProcessName: String?, val mIsNormal: Boolean = false) {
     }
 
     open fun makeLogItem(num: Int, logLine: String, prevLevel: Int): LogItem {
@@ -1055,7 +1057,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
 
             tokenFilterLogs = Array(mSortedTokenFilters.size) {
                 if (mSortedTokenFilters[it].mPosition >= 0) {
-                    textSplited[mSortedTokenFilters[it].mPosition]
+                    FormatManager.internToken(textSplited[mSortedTokenFilters[it].mPosition])
                 }
                 else {
                     ""
@@ -1079,7 +1081,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
             null
         }
 
-        return LogItem(num.toString(), logLine, level, tokenFilterLogs, null, processName, isNormal)
+        return LogItem(num, logLine, level, tokenFilterLogs, null, processName, isNormal)
     }
 
     private fun makePattenPrintValue() {
@@ -1203,7 +1205,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                 val logItems = ArrayList<LogItem>(baseItems.size)
                 if (mBookmarkMode) {
                     for (item in baseItems) {
-                        if (bookmarkSet.contains(item.mNum.toInt())) {
+                        if (bookmarkSet.contains(item.mNum)) {
                             logItems.add(item)
                         }
                     }
@@ -1268,7 +1270,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                         }
                         prevIsShow = cur
 
-                        if (cur || (hasBookmarks && bookmarkSet.contains(item.mNum.toInt()))) {
+                        if (cur || (hasBookmarks && bookmarkSet.contains(item.mNum))) {
                             logItems.add(item)
                         }
                     }
@@ -1409,7 +1411,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                     }
 
                     mBaseModel!!.mLogItems.add(filterItem.mItem)
-                    if (filterItem.mIsShow || mBookmarkManager.mBookmarks.contains(filterItem.mItem.mNum.toInt())) {
+                    if (filterItem.mIsShow || mBookmarkManager.mBookmarks.contains(filterItem.mItem.mNum)) {
                         mLogItems.add(filterItem.mItem)
                     }
                 }

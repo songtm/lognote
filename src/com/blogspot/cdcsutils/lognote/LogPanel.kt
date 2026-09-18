@@ -383,7 +383,7 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
 
     fun goToRowByFullLineNum(num: Int, column: Int) {
         val logItems = mTable.mTableModel.mLogItems
-        val index: Int = logItems.binarySearch { logItem -> logItem.mNum.toInt() - num }
+        val index: Int = logItems.binarySearch { logItem -> logItem.mNum - num }
         if (index >= 0) {
             goToRow(index, column)
         }

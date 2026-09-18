@@ -54,7 +54,7 @@ class VStatusPanel(logTable: LogTable) : JPanel() {
         if (rowCount > 0 && height > 0 && mBookmarkManager.mBookmarks.isNotEmpty()) {
             val logItems = mLogTable.mTableModel.mLogItems
             for (num in mBookmarkManager.mBookmarks) {
-                val idx = logItems.binarySearch { logItem -> logItem.mNum.toInt() - num }
+                val idx = logItems.binarySearch { logItem -> logItem.mNum - num }
                 if (idx in 0 until rowCount) {
                     val y = (idx.toLong() * height / rowCount).toInt()
                     g?.fillRect(0, y, width, 1)

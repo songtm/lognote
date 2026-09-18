@@ -42,7 +42,7 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
             if (rowIndex >= 0 && mLogItems.size > rowIndex) {
                 val logItem = mLogItems[rowIndex]
                 if (columnIndex == COLUMN_NUM) {
-                    return logItem.mNum + " "
+                    return logItem.mNum.toString() + " "
                 } else if (columnIndex == COLUMN_PROCESS_NAME) {
                     if (TypeShowProcessName != SHOW_PROCESS_NONE) {
                         if (logItem.mProcessName == null) {
@@ -105,7 +105,7 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
             }
             tokenFilterLogs = Array(mSortedTokenFilters.size) {
                 if (mSortedTokenFilters[it].mPosition >= 0) {
-                    textSplited[mSortedTokenFilters[it].mPosition]
+                    FormatManager.internToken(textSplited[mSortedTokenFilters[it].mPosition])
                 } else {
                     ""
                 }
@@ -131,7 +131,7 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
             null
         }
 
-        return LogItem(num.toString(), log, level, tokenFilterLogs, tokenLogs, processName, isNormal)
+        return LogItem(num, log, level, tokenFilterLogs, tokenLogs, processName, isNormal)
     }
 
     override fun getPatternPrintFilter(col: Int): Pattern? {

@@ -131,6 +131,17 @@ class FormatManager private constructor(fileName: String) : PropertiesBase(fileN
 
         private val mRegexCache = java.util.concurrent.ConcurrentHashMap<String, Regex>()
 
+        private val mTokenPool = java.util.concurrent.ConcurrentHashMap<String, String>()
+
+        fun internToken(s: String): String {
+            val existing = mTokenPool.putIfAbsent(s, s)
+            return existing ?: s
+        }
+
+        fun clearTokenPool() {
+            mTokenPool.clear()
+        }
+
         private fun cachedRegex(pattern: String): Regex =
             mRegexCache[pattern] ?: Regex(pattern).also { mRegexCache[pattern] = it }
 
