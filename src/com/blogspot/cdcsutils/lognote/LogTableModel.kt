@@ -52,6 +52,8 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         const val SHOW_PROCESS_SHOW_WITH_BGCOLOR = 2
 
         var TypeShowProcessName = SHOW_PROCESS_SHOW_WITH_BGCOLOR
+
+        private const val CHUNK_LINE_COUNT = 100_000
     }
 
     private val mAgingTestManager = AgingTestManager.getInstance()
@@ -495,7 +497,9 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                             try {
                                 if (mIsFilterUpdated) {
                                     mMainUI.markLine()
+                                    val startTime = System.currentTimeMillis()
                                     makeFilteredItems(true)
+                                    Utils.printlnLog("**makeFilteredItems cost ${System.currentTimeMillis() - startTime} ms")
                                 }
                                 Thread.sleep(100)
                             } catch (e: Exception) {
@@ -559,16 +563,44 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         val bufferedReader = BufferedReader(FileReader(mLogFile!!), 1 shl 20)
         var line: String?
 
+        // 并行切分:正则 splitLog 是加载的主要 CPU 开销,按块并行计算,顺序组装以维持 prevLevel 链
+        val chunkLines = ArrayList<String>(CHUNK_LINE_COUNT)
         line = bufferedReader.readLine()
         while (line != null) {
-            val item = makeLogItem(num, line, prevLevel)
-            prevLevel = item.mLevel
-            mLogItems.add(item)
-            num++
+            chunkLines.add(line)
+            if (chunkLines.size >= CHUNK_LINE_COUNT) {
+                val r = buildLogItemsFromChunk(chunkLines, num, prevLevel)
+                num = r.first
+                prevLevel = r.second
+                chunkLines.clear()
+            }
             line = bufferedReader.readLine()
+        }
+        if (chunkLines.isNotEmpty()) {
+            val r = buildLogItemsFromChunk(chunkLines, num, prevLevel)
+            num = r.first
+            prevLevel = r.second
         }
 
         fireLogTableDataChanged()
+    }
+
+    private fun buildLogItemsFromChunk(lines: List<String>, num: Int, prevLevel: Int): Pair<Int, Int> {
+        val n = lines.size
+        val splits = arrayOfNulls<List<String>>(n)
+        java.util.stream.IntStream.range(0, n).parallel().forEach { i ->
+            splits[i] = FormatManager.splitLog(lines[i], mTokenCount, mSeparator, mSeparatorList)
+        }
+
+        var nextNum = num
+        var nextPrevLevel = prevLevel
+        for (i in 0 until n) {
+            val item = makeLogItemFromSplit(nextNum, lines[i], nextPrevLevel, splits[i]!!)
+            nextPrevLevel = item.mLevel
+            mLogItems.add(item)
+            nextNum++
+        }
+        return Pair(nextNum, nextPrevLevel)
     }
 
     private fun estimateLineCount(file: File): Int {
@@ -1005,11 +1037,14 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
     }
 
     open fun makeLogItem(num: Int, logLine: String, prevLevel: Int): LogItem {
+        return makeLogItemFromSplit(num, logLine, prevLevel, FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList))
+    }
+
+    protected open fun makeLogItemFromSplit(num: Int, logLine: String, prevLevel: Int, textSplited: List<String>): LogItem {
         val level: Int
         val tokenFilterLogs: Array<String>
         val isNormal: Boolean
 
-        val textSplited = FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList)
         if (textSplited.size > mTokenNthMax) {
             isNormal = true
             level = if (mLevelIdx >= 0) {
@@ -1162,17 +1197,20 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                 mLogItems.clear()
                 mLogItems = mutableListOf()
 
-                val logItems: MutableList<LogItem> = mutableListOf()
+                val baseItems = mBaseModel!!.mLogItems
+                val bookmarkSet = mBookmarkManager.mBookmarks.toHashSet()
+                val hasBookmarks = bookmarkSet.isNotEmpty()
+                val logItems = ArrayList<LogItem>(baseItems.size)
                 if (mBookmarkMode) {
-                    for (item in mBaseModel!!.mLogItems) {
-                        if (mBookmarkManager.mBookmarks.contains(item.mNum.toInt())) {
+                    for (item in baseItems) {
+                        if (bookmarkSet.contains(item.mNum.toInt())) {
                             logItems.add(item)
                         }
                     }
                 } else {
                     makePattenPrintValue()
-                    var isShow: Boolean
 
+                    val isCaseInsensitive = mPatternCase == Pattern.CASE_INSENSITIVE
                     var regexShowLog = ""
                     var normalShowLog = ""
                     val showLogSplit = mFilterShowLog.split("|")
@@ -1194,78 +1232,43 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                             else {
                                 normalShowLog += "|$logUnit"
                             }
-
-                            if (mPatternCase == Pattern.CASE_INSENSITIVE) {
-                                normalShowLog = normalShowLog.uppercase()
-                            }
                         }
                     }
 
+                    if (isCaseInsensitive) {
+                        normalShowLog = normalShowLog.uppercase()
+                    }
+
                     val patternShowLog = Utils.compilePattern(regexShowLog, mPatternCase)
-                    val matcherShowLog = patternShowLog.matcher("")
                     val normalShowLogSplit = normalShowLog.split("|")
 
                     Utils.printlnLog("Show Log $normalShowLog, $regexShowLog")
                     // 非正常日志(换行/空行等)的过滤结果以上一条正常日志的过滤结果为准
+                    val isFullMode = mFullMode
+                    val n = baseItems.size
+                    val showNormal = BooleanArray(n)
+                    if (!isFullMode) {
+                        java.util.stream.IntStream.range(0, n).parallel().forEach { i ->
+                            if (baseItems[i].mIsNormal) {
+                                showNormal[i] = isShowNormal(baseItems[i], isCaseInsensitive, normalShowLog, normalShowLogSplit, regexShowLog, patternShowLog)
+                            }
+                        }
+                    }
+
                     var prevIsShow = true
-                    for (item in mBaseModel!!.mLogItems) {
+                    for (i in 0 until n) {
                         if (mIsFilterUpdated) {
                             break
                         }
-
-                        isShow = true
-
-                        if (!mFullMode) {
-                            if (item.mIsNormal) {
-                                if (mFilterLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
-                                    isShow = false
-                                }
-                                else if ((mFilterHideLog.isNotEmpty() && mPatternHideLog.matcher(item.mLogLine).find())
-                                    || isMatchHideToken(item)) {
-                                    isShow = false
-                                }
-                                else if (mFilterShowLog.isNotEmpty()) {
-                                    var isFound = false
-                                    if (normalShowLog.isNotEmpty()) {
-                                        val logLine = if (mPatternCase == Pattern.CASE_INSENSITIVE) {
-                                            item.mLogLine.uppercase()
-                                        } else {
-                                            item.mLogLine
-                                        }
-                                        for (sp in normalShowLogSplit) {
-                                            if (logLine.contains(sp)) {
-                                                isFound = true
-                                                break
-                                            }
-                                        }
-                                    }
-
-                                    if (!isFound) {
-                                        if (regexShowLog.isEmpty()) {
-                                            isShow = false
-                                        }
-                                        else {
-                                            matcherShowLog.reset(item.mLogLine)
-                                            if (!matcherShowLog.find()) {
-                                                isShow = false
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if (isShow) {
-                                    if (isNotMatchShowToken(item)) {
-                                        isShow = false
-                                    }
-                                }
-                            }
-                            else {
-                                isShow = prevIsShow
-                            }
+                        val item = baseItems[i]
+                        val cur = when {
+                            isFullMode -> true
+                            item.mIsNormal -> showNormal[i]
+                            else -> prevIsShow
                         }
-                        prevIsShow = isShow
+                        prevIsShow = cur
 
-                        if (isShow || mBookmarkManager.mBookmarks.contains(item.mNum.toInt())) {
+                        if (cur || (hasBookmarks && bookmarkSet.contains(item.mNum.toInt()))) {
                             logItems.add(item)
                         }
                     }
@@ -1279,6 +1282,49 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                 mBaseModel?.fireLogTableDataFiltered()
             }
         }
+    }
+
+    private fun isShowNormal(item: LogItem, isCaseInsensitive: Boolean,
+                             normalShowLog: String, normalShowLogSplit: List<String>,
+                             regexShowLog: String, patternShowLog: Pattern): Boolean {
+        var isShow = true
+        if (mFilterLevel != LEVEL_NONE && item.mLevel < mFilterLevel) {
+            isShow = false
+        }
+        else if ((mFilterHideLog.isNotEmpty() && mPatternHideLog.matcher(item.mLogLine).find())
+            || isMatchHideToken(item)) {
+            isShow = false
+        }
+        else if (mFilterShowLog.isNotEmpty()) {
+            var isFound = false
+            if (normalShowLog.isNotEmpty()) {
+                val logLine = if (isCaseInsensitive) {
+                    item.mLogLine.uppercase()
+                } else {
+                    item.mLogLine
+                }
+                for (sp in normalShowLogSplit) {
+                    if (logLine.contains(sp)) {
+                        isFound = true
+                        break
+                    }
+                }
+            }
+
+            if (!isFound) {
+                if (regexShowLog.isEmpty()) {
+                    isShow = false
+                }
+                else if (!patternShowLog.matcher(item.mLogLine).find()) {
+                    isShow = false
+                }
+            }
+        }
+
+        if (isShow && isNotMatchShowToken(item)) {
+            isShow = false
+        }
+        return isShow
     }
 
     internal inner class LogFilterItem(item: LogItem, isShow: Boolean) {

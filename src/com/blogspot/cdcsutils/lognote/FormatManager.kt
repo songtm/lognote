@@ -132,7 +132,7 @@ class FormatManager private constructor(fileName: String) : PropertiesBase(fileN
         private val mRegexCache = java.util.concurrent.ConcurrentHashMap<String, Regex>()
 
         private fun cachedRegex(pattern: String): Regex =
-            mRegexCache.computeIfAbsent(pattern) { Regex(it) }
+            mRegexCache[pattern] ?: Regex(pattern).also { mRegexCache[pattern] = it }
 
         fun splitLog(line: String, tokenCount: Int, separator: String, separatorList: List<String>?): List<String> {
             if (separatorList == null) {

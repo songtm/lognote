@@ -537,7 +537,9 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             val menuItem = JMenuItem(path.fileName.toString())
             menuItem.toolTipText = item.mPath
             menuItem.addActionListener { e: ActionEvent? ->
+                val startTime = System.currentTimeMillis()
                 openFile((e?.source as JMenuItem).toolTipText ?: "", false, false)
+                Utils.printlnLog("**openFile cost ${System.currentTimeMillis() - startTime} ms")
             }
             mItemFileOpenRecents.add(menuItem)
         }
@@ -2173,7 +2175,9 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mFilteredLogPanel.mTableModel.setLogFile(path)
 
         openItem.mStartLine = if (isAppend) mFullLogPanel.mTableModel.rowCount + 1 else 0
+        val startTime = System.currentTimeMillis()
         mFullLogPanel.mTableModel.loadItems(isAppend)
+        Utils.printlnLog("**loadItems cost ${System.currentTimeMillis() - startTime} ms")
         openItem.mEndLine = mFullLogPanel.mTableModel.rowCount - 1
         mRecentFileManager.addOpenFile(openItem)
         mFilteredLogPanel.mTableModel.loadItems(isAppend)

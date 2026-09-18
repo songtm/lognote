@@ -86,13 +86,16 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
     }
 
     override fun makeLogItem(num: Int, logLine: String, prevLevel: Int): LogItem {
+        return makeLogItemFromSplit(num, logLine, prevLevel, FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList))
+    }
+
+    override fun makeLogItemFromSplit(num: Int, logLine: String, prevLevel: Int, textSplited: List<String>): LogItem {
         val level: Int
         val tokenFilterLogs: Array<String>
         val tokenLogs: List<String>?
         val log: String
         val isNormal: Boolean
 
-        val textSplited = FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList)
         if (textSplited.size == mTokenCount) {
             isNormal = true
             level = if (mLevelIdx >= 0) {
