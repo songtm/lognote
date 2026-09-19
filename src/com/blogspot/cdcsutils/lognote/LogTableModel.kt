@@ -1425,12 +1425,12 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                         mLogItems.removeAt(0)
                         removedCount++
                     }
-                    fireLogTableDataChanged(removedCount)
-                    removedCount = 0
-
-                    mBaseModel!!.fireLogTableDataChanged(baseRemovedCount)
-                    baseRemovedCount = 0
                 }
+                fireLogTableDataChanged(removedCount)
+                removedCount = 0
+
+                mBaseModel!!.fireLogTableDataChanged(baseRemovedCount)
+                baseRemovedCount = 0
             }
         }
 
