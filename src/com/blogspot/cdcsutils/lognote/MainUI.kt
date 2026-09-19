@@ -1584,6 +1584,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
 
         registerKeyStroke()
         registerFindKeyStroke()
+        registerFilterToggleKeyStroke()
 //        registerTriggerKeyStroke()
 
         IsCreatingUI = false
@@ -3999,6 +4000,96 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         }
         rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
         rootPane.actionMap.put(actionMapKey, action)
+    }
+
+    private fun registerFilterToggleKeyStroke() {
+        var stroke = KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK)
+        var actionMapKey = javaClass.name + ":TOGGLE_SHOW_LOG_FILTER"
+        var action: Action = object : AbstractAction() {
+            override fun actionPerformed(event: ActionEvent) {
+                toggleShowLogFilter()
+            }
+        }
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
+        rootPane.actionMap.put(actionMapKey, action)
+
+        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK)
+        actionMapKey = javaClass.name + ":TOGGLE_TOKEN_FILTER_TAG"
+        action = object : AbstractAction() {
+            override fun actionPerformed(event: ActionEvent) {
+                toggleTokenFilter("Tag")
+            }
+        }
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
+        rootPane.actionMap.put(actionMapKey, action)
+
+        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK)
+        actionMapKey = javaClass.name + ":TOGGLE_TOKEN_FILTER_PID"
+        action = object : AbstractAction() {
+            override fun actionPerformed(event: ActionEvent) {
+                toggleTokenFilter("PID")
+            }
+        }
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
+        rootPane.actionMap.put(actionMapKey, action)
+
+        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_4, InputEvent.CTRL_DOWN_MASK)
+        actionMapKey = javaClass.name + ":TOGGLE_TOKEN_FILTER_TID"
+        action = object : AbstractAction() {
+            override fun actionPerformed(event: ActionEvent) {
+                toggleTokenFilter("TID")
+            }
+        }
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
+        rootPane.actionMap.put(actionMapKey, action)
+
+        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.CTRL_DOWN_MASK or InputEvent.SHIFT_DOWN_MASK)
+        actionMapKey = javaClass.name + ":TOGGLE_FULL_LOG"
+        action = object : AbstractAction() {
+            override fun actionPerformed(event: ActionEvent) {
+                mItemFull.doClick()
+            }
+        }
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
+        rootPane.actionMap.put(actionMapKey, action)
+    }
+
+    private fun isFocusOnFilterCombo(combo: FilterComboBox): Boolean {
+        return combo.editor.editorComponent.isFocusOwner
+    }
+
+    private fun toggleShowLogFilter() {
+        if (mShowLogToggle.isSelected) {
+            if (isFocusOnFilterCombo(mShowLogCombo)) {
+                mShowLogToggle.isSelected = false
+            } else {
+                mShowLogCombo.requestFocus()
+                mShowLogCombo.editor.selectAll()
+            }
+        } else {
+            mShowLogToggle.isSelected = true
+            mShowLogCombo.requestFocus()
+            mShowLogCombo.editor.selectAll()
+        }
+    }
+
+    private fun toggleTokenFilter(tokenName: String) {
+        val idx = mTokenToggle.indexOfFirst { it.text == tokenName }
+        if (idx < 0) {
+            return
+        }
+        if (mTokenToggle[idx].isSelected) {
+            if (isFocusOnFilterCombo(mTokenCombo[idx])) {
+                mTokenToggle[idx].isSelected = false
+            } else {
+                mTokenCombo[idx].requestFocus()
+                mTokenCombo[idx].editor.selectAll()
+            }
+        } else {
+            mTokenToggle[idx].isSelected = true
+            mTokenCombo[idx].requestFocus()
+            mTokenCombo[idx].editor.selectAll()
+        }
     }
 
     private fun registerTriggerKeyStroke() {
