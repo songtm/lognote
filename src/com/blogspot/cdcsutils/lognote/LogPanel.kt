@@ -24,6 +24,7 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
     var mPackageBtns: Array<PackageToggleButton> = emptyArray()
     private var mBookmarksBtn: FilterToggleButton
     private var mFullBtn: FilterToggleButton
+    private var mSyncLineBtn: ColorButton
 
     private val mScrollPane: JScrollPane
     private val mVStatusPanel: VStatusPanel
@@ -79,6 +80,10 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
         mFullBtn.toolTipText = TooltipStrings.VIEW_FULL_TOGGLE
         mFullBtn.margin = Insets(0, 3, 0, 3)
         mFullBtn.addActionListener(mActionHandler)
+        mSyncLineBtn = ColorButton("SyncLine")
+        mSyncLineBtn.toolTipText = "Sync selected line of full log to filtered log"
+        mSyncLineBtn.margin = Insets(0, 3, 0, 3)
+        mSyncLineBtn.addActionListener { mMainUI.syncFullLineToFilter() }
 
         updateTableBar(null, null)
 
@@ -314,6 +319,9 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
         }
         else {
             if (mMainUI.mItemFull.state) {
+                mSyncLineBtn.background = mCtrlMainPanel.background
+                mSyncLineBtn.border = ColorButtonBorder(Color.lightGray)
+                mCtrlMainPanel.add(mSyncLineBtn)
                 updateTableBarPackages()
                 addVSeparator(mCtrlMainPanel)
                 updateTableBarCmds(cmds)

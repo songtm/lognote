@@ -3630,6 +3630,24 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         }
     }
 
+    fun syncFullLineToFilter() {
+        if (IsCreatingUI) {
+            return
+        }
+        if (mFullLogPanel.getSelectedRow() < 0) {
+            return
+        }
+        val line = mFullLogPanel.getSelectedLine()
+        Utils.printlnLog("SyncLine : $line")
+        for (idx in 0 until mFilteredLogPanel.mTableModel.rowCount) {
+            val num = mFilteredLogPanel.mTableModel.getValueAt(idx, 0).toString().trim().toInt()
+            if (line <= num) {
+                mFilteredLogPanel.goToRow(idx, 0)
+                break
+            }
+        }
+    }
+
     fun markLine() {
         if (IsCreatingUI) {
             return
