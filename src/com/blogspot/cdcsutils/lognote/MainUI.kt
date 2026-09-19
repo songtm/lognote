@@ -395,6 +395,8 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
 
         createUI()
 
+        disableAltMenuFocus()
+
         if (mLogCmdManager.getType() == LogCmdManager.TYPE_LOGCAT) {
             mLogCmdManager.getDevices()
         }
@@ -1585,6 +1587,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         registerKeyStroke()
         registerFindKeyStroke()
         registerFilterToggleKeyStroke()
+        registerLogPanelFocusKeyStroke()
 //        registerTriggerKeyStroke()
 
         IsCreatingUI = false
@@ -4212,6 +4215,44 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         }
         rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
         rootPane.actionMap.put(actionMapKey, action)
+    }
+
+    private fun disableAltMenuFocus() {
+        // Swing 的 MenuSelectionManager 在 Alt 键"释放"时切换菜单栏焦点(打开/关闭菜单)。
+        // 只拦截 Alt 的"释放"事件, 保留"按下"事件:
+        // - Alt 单独按不会再抢焦点 / 切换菜单
+        // - Alt+F 等助记符仍能正常打开菜单, 且菜单内部状态保持一致(Esc 仍可关闭菜单)
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher { e ->
+            e.keyCode == KeyEvent.VK_ALT && e.id == KeyEvent.KEY_RELEASED
+        }
+    }
+
+    private fun registerLogPanelFocusKeyStroke() {
+        val stroke = KeyStroke.getKeyStroke(KeyEvent.VK_J, InputEvent.CTRL_DOWN_MASK)
+        val actionMapKey = javaClass.name + ":TOGGLE_LOG_PANEL_FOCUS"
+        val action: Action = object : AbstractAction() {
+            override fun actionPerformed(event: ActionEvent) {
+                toggleLogPanelFocus()
+            }
+        }
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
+        rootPane.actionMap.put(actionMapKey, action)
+    }
+
+    private fun isFocusOnLogPanel(panel: LogPanel): Boolean {
+        val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner ?: return false
+        return owner === panel || panel.isAncestorOf(owner)
+    }
+
+    private fun toggleLogPanelFocus() {
+        if (isFocusOnLogPanel(mFilteredLogPanel)) {
+            // 焦点已在 filter log panel: 若 full log panel 仍附着在主分割面板(未移到独立窗口)则聚焦它
+            if (mFullLogPanel.parent == mLogSplitPane) {
+                mFullLogPanel.mTable.requestFocusInWindow()
+            }
+        } else {
+            mFilteredLogPanel.mTable.requestFocusInWindow()
+        }
     }
 
     fun showFindResultTooltip(isNext: Boolean, result: String) {
