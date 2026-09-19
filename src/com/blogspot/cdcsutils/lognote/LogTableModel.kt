@@ -1547,16 +1547,31 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                                 }
 
                                 logLines.add(line)
-                                line = bufferedReader.readLine()
                                 if (System.currentTimeMillis() > nextUpdateTime) {
                                     break
                                 }
+                                // When the stream goes momentarily quiet (e.g. the app moved to
+                                // the background), readLine() would block and hold the last line
+                                // back. Break early so the batch is flushed below, then block for
+                                // the next line after flushing.
+                                if (!bufferedReader.ready()) {
+                                    break
+                                }
+                                line = bufferedReader.readLine()
                             }
                         } else {
                             Thread.sleep(1000)
                         }
 
                         startNum = updateLogItems(logLines, startNum)
+
+                        // We stopped draining because the stream went quiet or the 100ms window
+                        // elapsed with the current line already consumed. Block for the next line
+                        // now that the batch has been flushed, so the last line is shown promptly
+                        // instead of being held back until further input arrives.
+                        if (!mIsPause && line != null) {
+                            line = bufferedReader.readLine()
+                        }
                     } catch (e: Exception) {
                         Utils.printlnLog("startScan thread stop")
                         Utils.printlnLog("stack trace : ${e.stackTraceToString()}")
