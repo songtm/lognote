@@ -1588,6 +1588,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         registerFindKeyStroke()
         registerFilterToggleKeyStroke()
         registerLogPanelFocusKeyStroke()
+        registerBookmarkViewKeyStroke()
 //        registerTriggerKeyStroke()
 
         IsCreatingUI = false
@@ -3658,6 +3659,15 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         }
     }
 
+    fun toggleBookmarkView() {
+        if (IsCreatingUI) {
+            return
+        }
+        val selected = !mFilteredLogPanel.mTableModel.mBookmarkMode
+        mFilteredLogPanel.setBookmarkView(selected)
+        mFullLogPanel.setBookmarkView(selected)
+    }
+
     fun markLine() {
         if (IsCreatingUI) {
             return
@@ -4239,6 +4249,18 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         val action: Action = object : AbstractAction() {
             override fun actionPerformed(event: ActionEvent) {
                 toggleLogPanelFocus()
+            }
+        }
+        rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
+        rootPane.actionMap.put(actionMapKey, action)
+    }
+
+    private fun registerBookmarkViewKeyStroke() {
+        val stroke = KeyStroke.getKeyStroke(KeyEvent.VK_B, InputEvent.CTRL_DOWN_MASK)
+        val actionMapKey = javaClass.name + ":TOGGLE_BOOKMARK_VIEW"
+        val action: Action = object : AbstractAction() {
+            override fun actionPerformed(event: ActionEvent) {
+                toggleBookmarkView()
             }
         }
         rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)

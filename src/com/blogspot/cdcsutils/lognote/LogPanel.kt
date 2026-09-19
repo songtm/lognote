@@ -631,12 +631,7 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
                     }
 
                     mBookmarksBtn -> {
-                        val selected = mBookmarksBtn.model.isSelected
-                        if (selected) {
-                            mFullBtn.model.isSelected = false
-                        }
-                        mTable.mTableModel.mBookmarkMode = selected
-                        mTable.repaint()
+                        setBookmarkView(mBookmarksBtn.model.isSelected)
                     }
 
                     mFullBtn -> {
@@ -650,6 +645,15 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
                 }
             }
         }
+    }
+
+    fun setBookmarkView(selected: Boolean) {
+        mBookmarksBtn.model.isSelected = selected
+        if (selected) {
+            mFullBtn.model.isSelected = false
+        }
+        mTable.mTableModel.mBookmarkMode = selected
+        mTable.repaint()
     }
 
     internal inner class BookmarkHandler : BookmarkEventListener {

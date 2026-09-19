@@ -12,15 +12,16 @@ import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.JTableHeader
 
 
-open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
+open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
     companion object {
         const val COLUMN_0_WIDTH = 80
 
         const val MIN_LOG_WIDTH = 720
         const val DEFAULT_LOG_WIDTH = 1920
-//        const val DEFAULT_LOG_WIDTH = 3840
+
+        //        const val DEFAULT_LOG_WIDTH = 3840
         var LogWidth = DEFAULT_LOG_WIDTH
-        
+
         const val PROCESS_COLOR_RANGE = 0x40
     }
 
@@ -29,7 +30,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
     private val mBookmarkManager = BookmarkManager.getInstance()
     val mMultiClickInterval = try {
         Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval").toString().toInt() + 500
-    } catch(ex: Exception) {
+    } catch (ex: Exception) {
         Utils.printlnLog("failed get awt.multiClickInterval : ${ex.stackTraceToString()}")
         1000
     }
@@ -64,8 +65,18 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         this.updateProcessNameColumnWidth(false)
 
         getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none")
-        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, InputEvent.CTRL_DOWN_MASK), "none")
-        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, InputEvent.CTRL_DOWN_MASK), "none")
+        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
+            KeyStroke.getKeyStroke(
+                KeyEvent.VK_PAGE_UP,
+                InputEvent.CTRL_DOWN_MASK
+            ), "none"
+        )
+        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
+            KeyStroke.getKeyStroke(
+                KeyEvent.VK_PAGE_DOWN,
+                InputEvent.CTRL_DOWN_MASK
+            ), "none"
+        )
 
         this.addMouseListener(MouseHandler())
         this.addMouseMotionListener(MouseHandler())
@@ -78,14 +89,13 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
 
         mTableColor = if (mTableModel.isFullDataModel()) {
             ColorManager.getInstance().mFullTableColor
-        }
-        else {
+        } else {
             ColorManager.getInstance().mFilterTableColor
         }
 
         updateProcessBgColor()
 
-        val colorEventListener = object: ColorManager.ColorEventListener{
+        val colorEventListener = object : ColorManager.ColorEventListener {
             override fun colorChanged(event: ColorManager.ColorEvent?) {
                 updateProcessBgColor()
             }
@@ -100,8 +110,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             0
         } else if (tmpRed + PROCESS_COLOR_RANGE > 0xFF) {
             0xFF - PROCESS_COLOR_RANGE
-        }
-        else {
+        } else {
             tmpRed
         }
         val tmpGreen = mTableColor.mLogBG.green - (PROCESS_COLOR_RANGE / 2)
@@ -109,8 +118,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             0
         } else if (tmpGreen + PROCESS_COLOR_RANGE > 0xFF) {
             0xFF - PROCESS_COLOR_RANGE
-        }
-        else {
+        } else {
             tmpGreen
         }
         val tmpBlue = mTableColor.mLogBG.blue - (PROCESS_COLOR_RANGE / 2)
@@ -118,8 +126,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             0
         } else if (tmpBlue + PROCESS_COLOR_RANGE > 0xFF) {
             0xFF - PROCESS_COLOR_RANGE
-        }
-        else {
+        } else {
             tmpBlue
         }
     }
@@ -132,8 +139,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             columnPackageName.minWidth = columnLog.minWidth
             columnPackageName.maxWidth = columnLog.maxWidth
             columnPackageName.preferredWidth = 150
-        }
-        else {
+        } else {
             columnPackageName.minWidth = 0
             columnPackageName.preferredWidth = 0
             columnPackageName.maxWidth = 0
@@ -154,15 +160,15 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         }
 
         val columnPackageName = columnModel.getColumn(LogTableModel.COLUMN_PROCESS_NAME)
-        val preferredLogWidth = newWidth - column0Width - VStatusPanel.VIEW_RECT_WIDTH - scrollVBarWidth - 2 - columnPackageName.width
+        val preferredLogWidth =
+            newWidth - column0Width - VStatusPanel.VIEW_RECT_WIDTH - scrollVBarWidth - 2 - columnPackageName.width
 
         val columnNum = columnModel.getColumn(LogTableModel.COLUMN_NUM)
         val columnLog = columnModel.getColumn(LogTableModel.COLUMN_LOG_START)
         if (columnNum.preferredWidth != column0Width) {
             columnNum.preferredWidth = column0Width
             columnLog.preferredWidth = preferredLogWidth
-        }
-        else {
+        } else {
             if (columnLog.preferredWidth != preferredLogWidth) {
                 columnLog.preferredWidth = preferredLogWidth
             }
@@ -178,7 +184,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             if (width > 0) {
                 g?.color = mColor
                 for (i in 1..mThickness) {
-                    g?.drawLine(width - i , y, width - i, height)
+                    g?.drawLine(width - i, y, width - i, height)
                 }
             }
         }
@@ -199,11 +205,13 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             return true
         }
     }
+
     internal inner class NumCellRenderer : DefaultTableCellRenderer() {
         init {
             horizontalAlignment = JLabel.RIGHT
             verticalAlignment = JLabel.CENTER
         }
+
         override fun getTableCellRendererComponent(
             table: JTable?,
             value: Any?,
@@ -223,8 +231,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             background = if (mBookmarkManager.mBookmarks.contains(num)) {
                 if (isRowSelected(row)) {
                     mTableColor.mNumBookmarkSelectedBG
-                }
-                else {
+                } else {
                     mTableColor.mNumBookmarkBG
                 }
             } else if (isRowSelected(row)) {
@@ -241,14 +248,18 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
 
                 if (top + left + bottom + right > 0) {
                     val lineBorder = MatteBorder(top, left, bottom, right, Color.GRAY)
-                    val emptyBorder = MatteBorder(thickness - top, thickness - left, thickness - bottom, thickness - right, background)
+                    val emptyBorder = MatteBorder(
+                        thickness - top,
+                        thickness - left,
+                        thickness - bottom,
+                        thickness - right,
+                        background
+                    )
                     label.border = CompoundBorder(lineBorder, emptyBorder)
-                }
-                else {
+                } else {
                     label.border = MatteBorder(thickness, thickness, thickness, thickness, background)
                 }
-            }
-            else {
+            } else {
                 label.border = MatteBorder(thickness, thickness, thickness, thickness, background)
             }
 
@@ -270,7 +281,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         ): Component {
             return if (LogTableModel.TypeShowProcessName == LogTableModel.SHOW_PROCESS_SHOW_WITH_BGCOLOR) {
                 mColorRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col) as JLabel
-            } else if  (LogTableModel.TypeShowProcessName == LogTableModel.SHOW_PROCESS_SHOW) {
+            } else if (LogTableModel.TypeShowProcessName == LogTableModel.SHOW_PROCESS_SHOW) {
                 mLogRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col) as JLabel
             } else {
                 super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col) as JLabel
@@ -287,7 +298,14 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             row: Int,
             col: Int
         ): Component {
-            val label:JLabel = super.getTableCellRendererComponent(table, mTableModel.getValueAt(row, col).toString(), isSelected, hasFocus, row, col) as JLabel
+            val label: JLabel = super.getTableCellRendererComponent(
+                table,
+                mTableModel.getValueAt(row, col).toString(),
+                isSelected,
+                hasFocus,
+                row,
+                col
+            ) as JLabel
 
             val prevPid = mTableModel.getValuePid(row - 1)
             val pid = mTableModel.getValuePid(row)
@@ -305,14 +323,17 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             if (mBookmarkManager.mBookmarks.contains(num)) {
                 if (isRowSelected(row)) {
                     background = mTableColor.mBookmarkSelectedBG
-                }
-                else {
+                } else {
                     background = mTableColor.mBookmarkBG
                 }
             } else if (isRowSelected(row)) {
                 background = mTableColor.mSelectedBG
             } else {
-                background = Color(pidInt % PROCESS_COLOR_RANGE + mBaseRed, (pidInt + (pidInt / 2)) % PROCESS_COLOR_RANGE + mBaseGreen, (pidInt  + (pidInt / 3)) % PROCESS_COLOR_RANGE + mBaseBlue)
+                background = Color(
+                    pidInt % PROCESS_COLOR_RANGE + mBaseRed,
+                    (pidInt + (pidInt / 2)) % PROCESS_COLOR_RANGE + mBaseGreen,
+                    (pidInt + (pidInt / 3)) % PROCESS_COLOR_RANGE + mBaseBlue
+                )
             }
 
             val thickness = 1
@@ -323,20 +344,23 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                 val bottom = if (isCellSelected(row + thickness, col)) 0 else thickness
                 val right = if (isCellSelected(row, col + thickness)) 0 else thickness
 
-                label.border = BorderFactory.createEmptyBorder(thickness - top, thicknessLeft - left, thickness - bottom, thickness - right)
+                label.border = BorderFactory.createEmptyBorder(
+                    thickness - top,
+                    thicknessLeft - left,
+                    thickness - bottom,
+                    thickness - right
+                )
                 if (top + left + bottom + right > 0) {
                     label.border = CompoundBorder(MatteBorder(top, left, bottom, right, Color.GRAY), label.border)
                 }
                 if (prevPid != pid && top == 0) {
                     label.border = CompoundBorder(MatteBorder(thickness, 0, 0, 0, Color.GRAY), label.border)
                 }
-            }
-            else {
+            } else {
                 if (prevPid != pid) {
                     label.border = BorderFactory.createEmptyBorder(0, thicknessLeft, thickness, thickness)
                     label.border = CompoundBorder(MatteBorder(thickness, 0, 0, 0, Color.GRAY), label.border)
-                }
-                else {
+                } else {
                     label.border = BorderFactory.createEmptyBorder(thickness, thicknessLeft, thickness, thickness)
                 }
             }
@@ -373,17 +397,16 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             row: Int,
             col: Int
         ): Component {
-            val newValue:String = if (value != null) {
+            val newValue: String = if (value != null) {
                 mTableModel.getPrintValue(value.toString(), row, col, isSelected, true)
             } else {
                 ""
             }
-            val label:JLabel
+            val label: JLabel
             if (newValue.isEmpty()) {
                 label = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col) as JLabel
                 foreground = mTableModel.getFgColor(row)
-            }
-            else {
+            } else {
                 label = super.getTableCellRendererComponent(table, newValue, isSelected, hasFocus, row, col) as JLabel
             }
 
@@ -392,8 +415,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             if (mBookmarkManager.mBookmarks.contains(num)) {
                 if (isRowSelected(row)) {
                     background = mTableColor.mBookmarkSelectedBG
-                }
-                else {
+                } else {
                     background = mTableColor.mBookmarkBG
                 }
             } else if (isRowSelected(row)) {
@@ -410,12 +432,16 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                 val bottom = if (isCellSelected(row + thickness, col)) 0 else thickness
                 val right = if (isCellSelected(row, col + thickness)) 0 else thickness
 
-                label.border = BorderFactory.createEmptyBorder(thickness - top, thicknessLeft - left, thickness - bottom, thickness - right)
+                label.border = BorderFactory.createEmptyBorder(
+                    thickness - top,
+                    thicknessLeft - left,
+                    thickness - bottom,
+                    thickness - right
+                )
                 if (top + left + bottom + right > 0) {
                     label.border = CompoundBorder(MatteBorder(top, left, bottom, right, Color.GRAY), label.border)
                 }
-            }
-            else {
+            } else {
                 label.border = BorderFactory.createEmptyBorder(thickness, thicknessLeft, thickness, thickness)
             }
 
@@ -505,7 +531,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         return
     }
 
-    open fun getLogText(row:Int): String {
+    open fun getLogText(row: Int): String {
         return mTableModel.getValueAt(row, LogTableModel.COLUMN_LOG_START).toString()
     }
 
@@ -513,14 +539,13 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         val log = StringBuilder("")
         var caretPos = 0
         var selectedLen = 0
-        var value:String
-        var newValue:String
+        var value: String
+        var newValue: String
 
         val rows: IntArray
         if (selectedRowCount > 1) {
             rows = selectedRows
-        }
-        else {
+        } else {
             var startIdx = targetRow - prevLines
             if (startIdx < 0) {
                 startIdx = 0
@@ -546,12 +571,10 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                 }
                 if (log.isEmpty()) {
                     log.append(value)
-                }
-                else {
+                } else {
                     log.append(System.lineSeparator() + value)
                 }
-            }
-            else {
+            } else {
                 newValue = mTableModel.getPrintValue(value, row, LogTableModel.COLUMN_LOG_START, false, false)
                 if (newValue.isEmpty()) {
                     val color = mTableModel.getFgStrColor(row)
@@ -565,22 +588,30 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         return Triple(log.toString(), caretPos, selectedLen)
     }
 
-    private fun showSelected(targetRow:Int) {
+    private fun showSelected(targetRow: Int) {
         val toolsPane = ToolsPane.getInstance()
         if (toolsPane.isVisible && toolsPane.isExistInTab(ToolsPane.Companion.ToolId.TOOL_ID_SELECTION)) {
             toolsPane.showTab(ToolsPane.Companion.ToolId.TOOL_ID_SELECTION)
-        }
-        else {
+        } else {
             val toolSelection = ToolsPane.getInstance().mToolSelection
-            val selectedLog = getSelectedLog(targetRow, toolSelection.mPrevLines, toolSelection.mNextLines, toolSelection.mIsPlainText)
+            val selectedLog = getSelectedLog(
+                targetRow,
+                toolSelection.mPrevLines,
+                toolSelection.mNextLines,
+                toolSelection.mIsPlainText
+            )
             val mainUI = MainUI.getInstance()
-            val toolSelectionDialog = ToolSelectionDialog(mainUI, selectedLog, Triple(mTableColor.mLogLevelNone, mTableColor.mLogBG, mTableColor.mSelectedBG))
+            val toolSelectionDialog = ToolSelectionDialog(
+                mainUI,
+                selectedLog,
+                Triple(mTableColor.mLogLevelNone, mTableColor.mLogBG, mTableColor.mSelectedBG)
+            )
             toolSelectionDialog.setLocationRelativeTo(mainUI)
             toolSelectionDialog.isVisible = true
         }
     }
 
-    private fun updateBookmark(targetRow:Int) {
+    private fun updateBookmark(targetRow: Int) {
         if (selectedRowCount > 1) {
             var isAdd = false
             for (row in selectedRows) {
@@ -607,8 +638,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                     }
                 }
             }
-        }
-        else {
+        } else {
             val value = mTableModel.getValueAt(targetRow, 0)
             val bookmark = value.toString().trim().toInt()
             mBookmarkManager.updateBookmark(bookmark)
@@ -650,8 +680,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                     val processItem = ProcessList.getInstance().getProcess(pid)
                     if (processItem != null) {
                         mProcessItem.text = "${processItem.mPid} : ${processItem.mProcessName} (${processItem.mUser})"
-                    }
-                    else {
+                    } else {
                         mProcessItem.text = "$pid :"
                     }
                     mProcessItem.addActionListener(mActionHandler)
@@ -677,8 +706,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                         val textSplit = evt.actionCommand.split(Regex(":"), 2)
                         val tagText = if (textSplit.size == 2) {
                             textSplit[1].trim()
-                        }
-                        else {
+                        } else {
                             ""
                         }
                         if (mSelectedWord.isNotEmpty()) {
@@ -712,7 +740,11 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                             columnX += columnModel.getColumn(i).width
                         }
                         val text = mTableModel.getValueAt(row, col).toString()
-                        selectedWord = getWordUnderCursor(text, Point(point.x - columnX, point.y), component.getFontMetrics(component.font)).trim()
+                        selectedWord = getWordUnderCursor(
+                            text,
+                            Point(point.x - columnX, point.y),
+                            component.getFontMetrics(component.font)
+                        ).trim()
                     }
                 }
             }
@@ -732,8 +764,10 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
 
                 mIncludeAddItem.text = "$prefix${Strings.ADD_INCLUDE}"
                 mIncludeAddItem.isOpaque = true
-                mIncludeAddItem.foreground = Color.decode(ColorManager.getInstance().mFilterTableColor.mStrFilteredFGs[0])
-                mIncludeAddItem.background = Color.decode(ColorManager.getInstance().mFilterTableColor.mStrFilteredBGs[0])
+                mIncludeAddItem.foreground =
+                    Color.decode(ColorManager.getInstance().mFilterTableColor.mStrFilteredFGs[0])
+                mIncludeAddItem.background =
+                    Color.decode(ColorManager.getInstance().mFilterTableColor.mStrFilteredBGs[0])
                 mIncludeAddItem.addActionListener(mIncludeAction)
                 add(mIncludeAddItem)
                 for (idx in 1..9) {
@@ -844,14 +878,25 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             override fun actionPerformed(p0: ActionEvent?) {
                 when (p0?.source) {
                     mCopyLineItem -> {
-                        this@LogTable.processKeyEvent(KeyEvent(this@LogTable, KeyEvent.KEY_PRESSED, p0.`when`, Utils.getShortcutMask(), KeyEvent.VK_C, 'C'))
+                        this@LogTable.processKeyEvent(
+                            KeyEvent(
+                                this@LogTable,
+                                KeyEvent.KEY_PRESSED,
+                                p0.`when`,
+                                Utils.getShortcutMask(),
+                                KeyEvent.VK_C,
+                                'C'
+                            )
+                        )
                     }
+
                     mCopyWordItem -> {
                         if (mSelectedWord.isNotEmpty()) {
                             val sel = StringSelection(mSelectedWord)
                             Toolkit.getDefaultToolkit().systemClipboard.setContents(sel, null)
                         }
                     }
+
                     mExcludeAddItem -> {
                         if (mSelectedWord.isNotEmpty()) {
                             var text = MainUI.getInstance().getTextShowLogCombo()
@@ -860,6 +905,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                             MainUI.getInstance().applyShowLogCombo(true)
                         }
                     }
+
                     mFindAddItem -> {
                         if (mSelectedWord.isNotEmpty()) {
                             var text = MainUI.getInstance().getTextFindCombo()
@@ -867,21 +913,26 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                             MainUI.getInstance().setTextFindCombo(text)
                         }
                     }
+
                     mIncludeSetItem -> {
                         if (mSelectedWord.isNotEmpty()) {
                             MainUI.getInstance().setTextShowLogCombo(mSelectedWord)
                             MainUI.getInstance().applyShowLogCombo(true)
                         }
                     }
+
                     mFilterPidItem -> {
                         MainUI.getInstance().setTokenFilterText(mSelectedWord, "PID")
                     }
+
                     mFilterTagItem -> {
                         MainUI.getInstance().setTokenFilterText(mSelectedWord, "Tag")
                     }
+
                     mIncludeRemoveItem -> {
                         MainUI.getInstance().removeIncludeFilterShowLogCombo(mSelectedWord)
                     }
+
                     mFindSetItem -> {
                         if (mSelectedWord.isNotEmpty()) {
                             MainUI.getInstance().setTextFindCombo(mSelectedWord)
@@ -891,25 +942,31 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                     mShowEntireItem -> {
                         showSelected(selectedRow)
                     }
+
                     mBookmarkItem -> {
                         updateBookmark(selectedRow)
                     }
+
                     mReconnectItem -> {
                         val mainUI = MainUI.getInstance()
                         mainUI.reconnectAdb()
                     }
+
                     mStartItem -> {
                         val mainUI = MainUI.getInstance()
                         mainUI.startAdbLog()
                     }
+
                     mStopItem -> {
                         val mainUI = MainUI.getInstance()
                         mainUI.stopAdbLog()
                     }
+
                     mClearItem -> {
                         val mainUI = MainUI.getInstance()
                         mainUI.clearAdbLog()
                     }
+
                     mProcessItem -> {
                         ProcessList.getInstance().showList()
                     }
@@ -953,7 +1010,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         private var secondClickRow = 0
 
         override fun mousePressed(p0: MouseEvent?) {
-            LogTableModel.WaitTimeForDoubleClick  = System.currentTimeMillis() + mMultiClickInterval
+            LogTableModel.WaitTimeForDoubleClick = System.currentTimeMillis() + mMultiClickInterval
             super.mousePressed(p0)
         }
 
@@ -973,8 +1030,7 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
                 }
                 popupMenu = PopUpTable(Point(p0.x, p0.y))
                 popupMenu?.show(p0.component, p0.x, p0.y)
-            }
-            else {
+            } else {
                 popupMenu?.isVisible = false
             }
 
@@ -1068,7 +1124,8 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
             when (p0?.keyCode) {
                 KeyEvent.VK_DOWN, KeyEvent.VK_UP, KeyEvent.VK_PAGE_DOWN, KeyEvent.VK_PAGE_UP -> {
                     val rect = getCellRect(selectedRow, selectedColumn, false)
-                    ToolTipManager.sharedInstance().mouseMoved(MouseEvent(this@LogTable, 0, 0, 0, rect.x, rect.y, 0, false))
+                    ToolTipManager.sharedInstance()
+                        .mouseMoved(MouseEvent(this@LogTable, 0, 0, 0, rect.x, rect.y, 0, false))
                 }
             }
 
@@ -1087,35 +1144,43 @@ open class LogTable(tableModel:LogTableModel) : JTable(tableModel){
         override fun keyPressed(p0: KeyEvent?) {
             ToolTipManager.sharedInstance().mouseMoved(MouseEvent(this@LogTable, 0, 0, 0, 0, 0, 0, false))
             if (p0?.isControlDown == true) {
-                if (p0.keyCode == KeyEvent.VK_B || p0.keyCode == KeyEvent.VK_F2) {
+                if (p0.keyCode == KeyEvent.VK_F2) {
                     updateBookmark(selectedRow)
                 }
-            }
-            else {
+            } else {
                 when (p0?.keyCode) {
                     KeyEvent.VK_PAGE_DOWN -> {
                         downPage()
                     }
+
                     KeyEvent.VK_PAGE_UP -> {
                         upPage()
                     }
+
                     KeyEvent.VK_DOWN -> {
                         downLine()
                     }
+
                     KeyEvent.VK_UP -> {
                         upLine()
                     }
+
                     KeyEvent.VK_ENTER -> {
                         showSelected(selectedRow)
                     }
+
                     KeyEvent.VK_F2 -> {
                         val mainUI = MainUI.getInstance()
                         val value = mTableModel.getValueAt(selectedRow, 0)
                         val row = value.toString().trim().toInt()
                         if (p0.isShiftDown) {
-                            mainUI.mFilteredLogPanel.goToRowByFullLineNum(BookmarkManager.getInstance().getPrevBookmark(row), -1)
+                            mainUI.mFilteredLogPanel.goToRowByFullLineNum(
+                                BookmarkManager.getInstance().getPrevBookmark(row), -1
+                            )
                         } else {
-                            mainUI.mFilteredLogPanel.goToRowByFullLineNum(BookmarkManager.getInstance().getNextBookmark(row), -1)
+                            mainUI.mFilteredLogPanel.goToRowByFullLineNum(
+                                BookmarkManager.getInstance().getNextBookmark(row), -1
+                            )
                         }
                     }
                 }
