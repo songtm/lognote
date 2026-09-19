@@ -2051,6 +2051,12 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             }
         }
         FlatLaf.updateUI()
+
+        // Focus border of the log panels in red, 3px width
+        UIManager.put("Component.focusColor", Color.decode(LAF_ACCENT_RED))
+        UIManager.put("Component.focusedBorderColor", Color.decode(LAF_ACCENT_RED))
+        UIManager.put("Component.focusWidth", 1)
+
         SwingUtilities.updateComponentTreeUI(this)
     }
 
