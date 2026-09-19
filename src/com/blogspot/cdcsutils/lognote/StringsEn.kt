@@ -175,6 +175,7 @@ class StringsEn private constructor() {
                 , "Sample Text"
                 , "apply [CTRL + ENTER]"
                 , "Reload"
+                , "Reveal"
                 , "Tool"
                 , "Tool windows"
                 , "Panel"

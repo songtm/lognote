@@ -185,6 +185,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     private lateinit var mStatusBar: JPanel
     private lateinit var mStatusMethod: JLabel
     private lateinit var mStatusReloadBtn: ColorButton
+    private lateinit var mRevealBtn: ColorButton
     private lateinit var mStatusTF: JTextField
 
     private lateinit var mFollowLabel: JLabel
@@ -1155,6 +1156,10 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mStatusReloadBtn.margin = Insets(mStatusReloadBtn.margin.top, 2, mStatusReloadBtn.margin.bottom, 2)
         mStatusReloadBtn.isVisible = false
         mStatusReloadBtn.addActionListener(mActionHandler)
+        mRevealBtn = ColorButton(Strings.REVEAL)
+        mRevealBtn.margin = Insets(mRevealBtn.margin.top, 2, mRevealBtn.margin.bottom, 2)
+        mRevealBtn.isVisible = false
+        mRevealBtn.addActionListener(mActionHandler)
         mStatusTF = StatusTextField(Strings.NONE)
         mStatusTF.document.addDocumentListener(mStatusChangeListener)
         mStatusTF.toolTipText = TooltipStrings.SAVED_FILE_TF
@@ -1214,7 +1219,10 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         val statusLeftPanel = JPanel(BorderLayout())
         statusLeftPanel.border = BorderFactory.createEmptyBorder(0, 2, 0, 2)
         statusLeftPanel.add(mStatusMethod, BorderLayout.CENTER)
-        statusLeftPanel.add(mStatusReloadBtn, BorderLayout.EAST)
+        val statusReloadPanel = JPanel(FlowLayout(FlowLayout.LEFT, 2, 0))
+        statusReloadPanel.add(mStatusReloadBtn)
+        statusReloadPanel.add(mRevealBtn)
+        statusLeftPanel.add(statusReloadPanel, BorderLayout.EAST)
 
         mStatusBar.add(statusLeftPanel, BorderLayout.WEST)
         mStatusBar.add(mStatusTF, BorderLayout.CENTER)
@@ -2127,10 +2135,12 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
 
     private fun setCurrentMethod(method: Int) {
         mStatusReloadBtn.isVisible = false
+        mRevealBtn.isVisible = false
         when (method) {
             METHOD_OPEN -> {
                 mStatusMethod.text = " ${Strings.OPEN} "
                 mStatusReloadBtn.isVisible = true
+                mRevealBtn.isVisible = true
             }
             METHOD_CMD -> {
                 mStatusMethod.text = " ${Strings.CMD} "
@@ -2139,6 +2149,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             METHOD_ADB -> {
                 mStatusMethod.text = " ${Strings.ADB} "
                 mOpenFileList.clear()
+                mRevealBtn.isVisible = true
             }
             METHOD_FOLLOW -> {
                 mStatusMethod.text = " ${Strings.FOLLOW} "
@@ -2735,6 +2746,12 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
                         for ((idx, path) in mOpenFileList.withIndex()) {
                             openFile(path, idx != 0, true)
                         }
+                    }
+                }
+                mRevealBtn -> {
+                    val path = mOpenFileList.lastOrNull() ?: mFullLogPanel.mTableModel.mLogFile?.absolutePath
+                    if (path != null) {
+                        Utils.revealInFileManager(path)
                     }
                 }
             }

@@ -175,6 +175,7 @@ class StringsKo private constructor() {
                 , "샘플 텍스트"
                 , "적용 [CTRL + ENTER]"
                 , "다시읽기"
+                , "폴더에서 보기"
                 , "도구"
                 , "도구 윈도우"
                 , "판넬"

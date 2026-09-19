@@ -212,6 +212,20 @@ class Utils {
         fun pathExists(path: String): Boolean {
             return Path(path).exists()
         }
+
+        fun revealInFileManager(path: String) {
+            try {
+                val file = Path(path).normalize().toString()
+                when {
+                    SystemInfo.isWindows -> ProcessBuilder("explorer.exe", "/select,", file).start()
+                    SystemInfo.isMacOS -> ProcessBuilder("open", "-R", file).start()
+                    SystemInfo.isLinux -> ProcessBuilder("xdg-open", Path(file).parent?.toString() ?: file).start()
+                    else -> printlnLog("Unsupported OS for reveal file: $path")
+                }
+            } catch (e: IOException) {
+                printlnLog("Failed to reveal file: $path, ${e.message}")
+            }
+        }
     }
 
     class CustomLineBorder(private val mColor: Color, private val mThickness: Int, private val mTarget: Int) :
