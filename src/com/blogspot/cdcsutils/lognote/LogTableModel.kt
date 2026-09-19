@@ -562,7 +562,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
             FormatManager.clearTokenPool()
         }
 
-        val bufferedReader = BufferedReader(FileReader(mLogFile!!), 1 shl 20)
+        val bufferedReader = BufferedReader(FileReader(mLogFile!!), 1 shl 23)
         var line: String?
 
         // 并行切分:正则 splitLog 是加载的主要 CPU 开销,按块并行计算,顺序组装以维持 prevLevel 链
@@ -589,20 +589,24 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
 
     private fun buildLogItemsFromChunk(lines: List<String>, num: Int, prevLevel: Int): Pair<Int, Int> {
         val n = lines.size
-        val splits = arrayOfNulls<List<String>>(n)
+        // 并行构造:splitLog(正则切分)与 LogItem 组装(字符串驻留/级别查表/对象分配)是加载的主要 CPU 开销,
+        // 全部放入并行阶段;仅续行(continuation)的级别依赖上一条日志,留在顺序阶段修正。
+        val items = arrayOfNulls<LogItem>(n)
         java.util.stream.IntStream.range(0, n).parallel().forEach { i ->
-            splits[i] = FormatManager.splitLog(lines[i], mTokenCount, mSeparator, mSeparatorList)
+            val splits = FormatManager.splitLog(lines[i], mTokenCount, mSeparator, mSeparatorList)
+            items[i] = makeLogItemFromSplit(num + i, lines[i], prevLevel, splits)
         }
 
-        var nextNum = num
         var nextPrevLevel = prevLevel
         for (i in 0 until n) {
-            val item = makeLogItemFromSplit(nextNum, lines[i], nextPrevLevel, splits[i]!!)
+            val item = items[i]!!
+            if (!item.mIsNormal) {
+                item.mLevel = resolveContinuationLevel(lines[i], nextPrevLevel)
+            }
             nextPrevLevel = item.mLevel
             mLogItems.add(item)
-            nextNum++
         }
-        return Pair(nextNum, nextPrevLevel)
+        return Pair(num + n, nextPrevLevel)
     }
 
     private fun estimateLineCount(file: File): Int {
@@ -1035,12 +1039,15 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
         return stringBuilder.toString()
     }
 
-    inner class LogItem(val mNum: Int, val mLogLine: String, val mLevel: Int, val mTokenFilterLogs: Array<String>, val mTokenLogs: List<String>?, val mProcessName: String?, val mIsNormal: Boolean = false) {
+    inner class LogItem(val mNum: Int, val mLogLine: String, var mLevel: Int, val mTokenFilterLogs: Array<String>, val mTokenLogs: List<String>?, val mProcessName: String?, val mIsNormal: Boolean = false) {
     }
 
     open fun makeLogItem(num: Int, logLine: String, prevLevel: Int): LogItem {
         return makeLogItemFromSplit(num, logLine, prevLevel, FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList))
     }
+
+    // 续行(不匹配格式的日志,如堆栈/空行)级别继承上一条正常日志;空行的处理各模型可能不同。
+    protected open fun resolveContinuationLevel(logLine: String, prevLevel: Int): Int = prevLevel
 
     protected open fun makeLogItemFromSplit(num: Int, logLine: String, prevLevel: Int, textSplited: List<String>): LogItem {
         val level: Int

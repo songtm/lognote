@@ -89,6 +89,9 @@ class LogColumnTableModel(mainUI: MainUI, baseModel: LogTableModel?) : LogTableM
         return makeLogItemFromSplit(num, logLine, prevLevel, FormatManager.splitLog(logLine, mTokenCount, mSeparator, mSeparatorList))
     }
 
+    override fun resolveContinuationLevel(logLine: String, prevLevel: Int): Int =
+        if (logLine.isEmpty()) LEVEL_NONE else prevLevel
+
     override fun makeLogItemFromSplit(num: Int, logLine: String, prevLevel: Int, textSplited: List<String>): LogItem {
         val level: Int
         val tokenFilterLogs: Array<String>
