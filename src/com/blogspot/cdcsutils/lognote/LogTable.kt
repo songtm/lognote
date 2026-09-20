@@ -508,10 +508,22 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
     }
 
     fun downLine() {
+        if (selectedRow < 0) {
+            return
+        }
+
         val toRect = visibleRect
         val rowY = selectedRow * rowHeight
 
-        if (visibleRect.y + visibleRect.height - 4 * rowHeight < rowY) {
+        // 光标行已在可视区外(如 Ctrl+上/下 跳转后)时, 逐行滚会一直追不上, 直接定位
+        if (rowY + rowHeight > visibleRect.y + visibleRect.height) {
+            // 光标行在可视区下方之外: 直接定位, 让该行落在底部余量处
+            toRect.y = rowY + 4 * rowHeight - visibleRect.height
+        } else if (rowY < visibleRect.y) {
+            // 光标行在可视区上方之外: 直接定位, 让该行落在顶部余量处
+            toRect.y = rowY - 3 * rowHeight
+        } else if (visibleRect.y + visibleRect.height - 4 * rowHeight < rowY) {
+            // 光标行在可视区内但贴近底部: 跟随下移一行
             toRect.y += rowHeight
         }
         scrollRectToVisible(toRect)
@@ -520,10 +532,22 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
     }
 
     fun upLine() {
+        if (selectedRow < 0) {
+            return
+        }
+
         val toRect = visibleRect
         val rowY = selectedRow * rowHeight
 
-        if (visibleRect.y + 3 * rowHeight > rowY) {
+        // 光标行已在可视区外(如 Ctrl+上/下 跳转后)时, 逐行滚会一直追不上, 直接定位
+        if (rowY < visibleRect.y) {
+            // 光标行在可视区上方之外: 直接定位, 让该行落在顶部余量处
+            toRect.y = rowY - 3 * rowHeight
+        } else if (rowY + rowHeight > visibleRect.y + visibleRect.height) {
+            // 光标行在可视区下方之外: 直接定位, 让该行落在底部余量处
+            toRect.y = rowY + 4 * rowHeight - visibleRect.height
+        } else if (visibleRect.y + 3 * rowHeight > rowY) {
+            // 光标行在可视区内但贴近顶部: 跟随上移一行
             toRect.y -= rowHeight
         }
         scrollRectToVisible(toRect)
