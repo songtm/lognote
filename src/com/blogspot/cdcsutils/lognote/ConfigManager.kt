@@ -60,6 +60,7 @@ class ConfigManager private constructor() {
         const val ITEM_ADB_LOG_SAVE_PATH = "ADB_LOG_SAVE_PATH"
         const val ITEM_ADB_PREFIX = "ADB_PREFIX"
         const val ITEM_ADB_OPTION_1 = "ADB_OPTION_1"
+        const val ITEM_ADB_FILTER_MODE = "ADB_FILTER_MODE"
 
         const val ITEM_FONT_NAME = "FONT_NAME"
         const val ITEM_FONT_SIZE = "FONT_SIZE"

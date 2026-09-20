@@ -250,6 +250,8 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
     internal var mSortedPidTokIdx = mFormatManager.mCurrFormat.mSortedPidTokIdx
     val mFilterTokenMgr = FilterTokenManager()
 
+    private var mPrevPidMatch = true
+
     private var mPatternCase = Pattern.CASE_INSENSITIVE
     var mMatchCase: Boolean = false
         set(value) {
@@ -1443,6 +1445,25 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
 
         return num
     }
+
+    private fun isPidMatched(line: String): Boolean {
+        PackageManager.getInstance().onLogLine(line)
+        val textSplited = FormatManager.splitLog(line, mTokenCount, mSeparator, mSeparatorList)
+        if (textSplited.size > mTokenNthMax
+            && mSortedPidTokIdx >= 0
+            && mSortedPidTokIdx < mSortedTokenFilters.size) {
+            val pos = mSortedTokenFilters[mSortedPidTokIdx].mPosition
+            if (pos >= 0 && pos < textSplited.size) {
+                val pid = textSplited[pos]
+                if (pid.isNotEmpty()) {
+                    mPrevPidMatch = PackageManager.getInstance().isActivePid(pid)
+                    return mPrevPidMatch
+                }
+            }
+        }
+        return mPrevPidMatch
+    }
+
     fun startScan() {
         if (mLogFile == null) {
             return
@@ -1459,6 +1480,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
 
         mGoToLast = true
         mBaseModel?.mGoToLast = true
+        mPrevPidMatch = true
 
         mScanThread = Thread {
             run {
@@ -1522,7 +1544,13 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                         }
 
                         if (!mIsPause) {
+                            val pidFilterEnabled = PackageManager.getInstance().isPidMode()
+                                    && PackageManager.getInstance().hasSelectedPackages()
+                                    && MainUI.CurrentMethod == MainUI.METHOD_ADB
                             while (line != null) {
+                                if (mScanThread !== Thread.currentThread()) {
+                                    return@run
+                                }
                                 if (currLogFile != mLogFile) {
                                     try {
                                         mFileWriter?.flush()
@@ -1538,15 +1566,20 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                                 if (mFileWriter == null) {
                                     mFileWriter = FileWriter(mLogFile)
                                 }
-                                mFileWriter?.write(line + "\n")
-                                saveNum++
 
-                                if (mScrollbackSplitFile && mScrollback > 0 && saveNum >= mScrollback) {
-                                    mMainUI.setSaveLogFile()
-                                    Utils.printlnLog("Change save file : ${mLogFile?.absolutePath}")
+                                val keepLine = !pidFilterEnabled || isPidMatched(line)
+
+                                if (keepLine) {
+                                    mFileWriter?.write(line + "\n")
+                                    saveNum++
+
+                                    if (mScrollbackSplitFile && mScrollback > 0 && saveNum >= mScrollback) {
+                                        mMainUI.setSaveLogFile()
+                                        Utils.printlnLog("Change save file : ${mLogFile?.absolutePath}")
+                                    }
+
+                                    logLines.add(line)
                                 }
-
-                                logLines.add(line)
                                 if (System.currentTimeMillis() > nextUpdateTime) {
                                     break
                                 }

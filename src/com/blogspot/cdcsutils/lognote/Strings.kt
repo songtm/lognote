@@ -416,5 +416,7 @@ class Strings private constructor() {
             get() { return currStrings[field]!! }
         val HIDE_CMD_TOOLBAR: String = idx++.toString()
             get() { return currStrings[field]!! }
+        val FILTER_BY_PID: String = idx++.toString()
+            get() { return currStrings[field]!! }
     }
 }

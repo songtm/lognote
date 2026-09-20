@@ -203,6 +203,7 @@ class StringsEn private constructor() {
                 , "Multiple"
                 , "Show Cmd Toolbar"
                 , "Hide Cmd Toolbar"
+                , "Filter packages by PID"
 //            , ""
             )
 

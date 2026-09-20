@@ -25,6 +25,12 @@ class PackageManager private constructor() {
     val mShowPackageList = mutableListOf<PackageItem>()
     private var mSelectedUids = ""
 
+    @Volatile
+    private var mActivePids: Set<String> = emptySet()
+    @Volatile
+    private var mIsPidMonitorRunning = false
+    private var mPidMonitorThread: Thread? = null
+
     private var mUpdatedTime: Long = 0
 
     companion object {
@@ -37,6 +43,17 @@ class PackageManager private constructor() {
         const val DEFAULT_UPDATE_TIME = 0 // msec
         var UpdateTime = DEFAULT_UPDATE_TIME
         const val MAX_PACKAGE_COUNT = 20
+
+        const val FILTER_MODE_UID = 0
+        const val FILTER_MODE_PID = 1
+        var FilterMode = FILTER_MODE_UID
+        const val PID_POLL_INTERVAL = 2000L // msec
+
+        private val START_PROC_REGEX = Regex("Start proc (\\d+):([a-zA-Z0-9._:]+)/")
+        private val START_PROC_OLD_REGEX = Regex("Start proc ([a-zA-Z0-9._:]+) for ([a-z]+ [^:]+): pid=(\\d+) uid=(\\d+)")
+        private val KILL_REGEX = Regex("Killing (\\d+):([a-zA-Z0-9._:]+)/")
+        private val LEAVE_REGEX = Regex("No longer want ([a-zA-Z0-9._:]+) \\(pid (\\d+)\\)")
+        private val DEATH_REGEX = Regex("Process ([a-zA-Z0-9._:]+) \\(pid (\\d+)\\) has died")
     }
 
     init {
@@ -148,6 +165,132 @@ class PackageManager private constructor() {
         } else {
             ""
         }
+    }
+
+    fun isPidMode(): Boolean {
+        return FilterMode == FILTER_MODE_PID
+    }
+
+    fun hasSelectedPackages(): Boolean {
+        return mShowPackageList.any { it.mIsSelected }
+    }
+
+    fun getFilterArg(): String {
+        return if (isPidMode()) "" else getUids()
+    }
+
+    fun isActivePid(pid: String): Boolean {
+        return pid in mActivePids
+    }
+
+    fun startPidMonitor() {
+        if (!isPidMode() || MainUI.CurrentMethod != MainUI.METHOD_ADB) {
+            return
+        }
+        stopPidMonitor()
+        refreshPidsNow()
+        mIsPidMonitorRunning = true
+        mPidMonitorThread = Thread {
+            while (mIsPidMonitorRunning && isPidMode()) {
+                try {
+                    Thread.sleep(PID_POLL_INTERVAL)
+                } catch (ex: InterruptedException) {
+                    break
+                }
+                refreshPidsNow()
+            }
+        }
+        mPidMonitorThread?.isDaemon = true
+        mPidMonitorThread?.start()
+    }
+
+    fun stopPidMonitor() {
+        mIsPidMonitorRunning = false
+        mPidMonitorThread?.interrupt()
+        mPidMonitorThread = null
+    }
+
+    fun refreshPidsNow() {
+        try {
+            refreshPids()
+        } catch (ex: Exception) {
+            Utils.printlnLog("refreshPids failed : ${ex.message}")
+        }
+    }
+
+    private fun refreshPids() {
+        ProcessList.getInstance().forceRefresh()
+        val pids = mutableSetOf<String>()
+        for (item in mShowPackageList) {
+            if (item.mIsSelected) {
+                pids.addAll(ProcessList.getInstance().getPids(item.mPackageName))
+            }
+        }
+        mActivePids = pids
+    }
+
+    fun onLogLine(line: String) {
+        if (!isPidMode()) {
+            return
+        }
+        if (line.indexOf("Start proc") < 0 && line.indexOf("has died") < 0
+            && line.indexOf("Killing") < 0 && line.indexOf("No longer want") < 0) {
+            return
+        }
+
+        val start = START_PROC_REGEX.find(line)
+        if (start != null) {
+            val pid = start.groupValues[1]
+            val pkg = start.groupValues[2]
+            if (isSelectedPackage(pkg)) {
+                mActivePids = mActivePids + pid
+            }
+            return
+        }
+
+        val startOld = START_PROC_OLD_REGEX.find(line)
+        if (startOld != null) {
+            val pkg = startOld.groupValues[1]
+            val pid = startOld.groupValues[3]
+            if (isSelectedPackage(pkg)) {
+                mActivePids = mActivePids + pid
+            }
+            return
+        }
+
+        val kill = KILL_REGEX.find(line)
+        if (kill != null) {
+            val pid = kill.groupValues[1]
+            val pkg = kill.groupValues[2]
+            if (isSelectedPackage(pkg)) {
+                mActivePids = mActivePids - pid
+            }
+            return
+        }
+
+        val leave = LEAVE_REGEX.find(line)
+        if (leave != null) {
+            val pkg = leave.groupValues[1]
+            val pid = leave.groupValues[2]
+            if (isSelectedPackage(pkg)) {
+                mActivePids = mActivePids - pid
+            }
+            return
+        }
+
+        val death = DEATH_REGEX.find(line)
+        if (death != null) {
+            val pkg = death.groupValues[1]
+            val pid = death.groupValues[2]
+            if (isSelectedPackage(pkg)) {
+                mActivePids = mActivePids - pid
+            }
+        }
+    }
+
+    private fun isSelectedPackage(pkg: String): Boolean {
+        val base = pkg.substringBefore(':')
+        return mShowPackageList.any { it.mIsSelected && it.mPackageName == base }
     }
 
     fun loadConfigPackages() {

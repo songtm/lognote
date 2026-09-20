@@ -189,7 +189,7 @@ class LogCmdManager private constructor(){
                             "${mLogCmd.substring(TYPE_CMD_PREFIX_LEN)} $mTargetDevice"
                         }
                         else {
-                            "$mAdbCmd -s $mTargetDevice $mLogCmd ${PackageManager.getInstance().getUids()}"
+                            "$mAdbCmd -s $mTargetDevice $mLogCmd ${PackageManager.getInstance().getFilterArg()}"
                         }
                     }
                     else {
@@ -197,7 +197,7 @@ class LogCmdManager private constructor(){
                             mLogCmd.substring(TYPE_CMD_PREFIX_LEN)
                         }
                         else {
-                            "$mAdbCmd $mLogCmd ${PackageManager.getInstance().getUids()}"
+                            "$mAdbCmd $mLogCmd ${PackageManager.getInstance().getFilterArg()}"
                         }
                     }
                     Utils.printlnLog("Start : $cmd")
@@ -246,8 +246,6 @@ class LogCmdManager private constructor(){
 
             CMD_GET_PROCESSES -> executer = Runnable {
                 run {
-                    mProcessList.clear()
-
                     val cmd = if (mTargetDevice.isNotBlank()) {
                         "$mAdbCmd -s $mTargetDevice shell ps"
                     }
@@ -267,6 +265,7 @@ class LogCmdManager private constructor(){
                         return@run
                     }
 
+                    val newMap = mutableMapOf<String, ProcessItem>()
                     val thread = Thread {
                         try {
                             var line:String
@@ -277,12 +276,11 @@ class LogCmdManager private constructor(){
                                 }
                                 val textSplit = line.trim().split(Regex("\\s+"))
                                 if (textSplit.size >= 9) {
-                                    mProcessList.add(ProcessItem(textSplit[1], textSplit[8], textSplit[0]))
+                                    newMap[textSplit[1]] = ProcessItem(textSplit[1], textSplit[8], textSplit[0])
                                 }
                             }
                         } catch (e: InterruptedException) {
                             Utils.printlnLog("Failed get process list")
-                            mProcessList.clear()
                         }
                     }
                     thread.start()
@@ -302,6 +300,8 @@ class LogCmdManager private constructor(){
                         }
                         Thread.sleep(100)
                     }
+
+                    mProcessList.setProcesses(newMap.toMap())
 
                     val adbEvent = AdbEvent(CMD_GET_PROCESSES, EVENT_SUCCESS)
                     sendEvent(adbEvent)

@@ -203,6 +203,7 @@ class StringsKo private constructor() {
                 , "다중"
                 , "Cmd 툴바 보이기"
                 , "Cmd 툴바 숨기기"
+                , "패키지를 PID로 필터"
 //            , ""
             )
 

@@ -114,6 +114,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     private lateinit var mItemLogFormat: JMenuItem
     private lateinit var mItemFilterIncremental: JCheckBoxMenuItem
     private lateinit var mItemFilterByFile: JCheckBoxMenuItem
+    private lateinit var mItemFilterByPid: JCheckBoxMenuItem
     private lateinit var mItemColorTagRegex: JCheckBoxMenuItem
     private lateinit var mItemAppearance: JMenuItem
     private lateinit var mItemTool: JMenuItem
@@ -412,6 +413,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mFilteredLogPanel.mTableModel.stopFollow()
         mFullLogPanel.mTableModel.stopScan()
         mFullLogPanel.mTableModel.stopFollow()
+        PackageManager.getInstance().stopPidMonitor()
         mLogCmdManager.stop()
         exitProcess(0)
     }
@@ -788,6 +790,10 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mItemFilterByFile = JCheckBoxMenuItem(Strings.FILTER_BY_FILE)
         mItemFilterByFile.addActionListener(mActionHandler)
         mMenuSettings.add(mItemFilterByFile)
+
+        mItemFilterByPid = JCheckBoxMenuItem(Strings.FILTER_BY_PID)
+        mItemFilterByPid.addActionListener(mActionHandler)
+        mMenuSettings.add(mItemFilterByPid)
 
         mItemColorTagRegex = JCheckBoxMenuItem(Strings.COLOR_TAG_REGEX)
         mItemColorTagRegex.addActionListener(mActionHandler)
@@ -1510,6 +1516,14 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             mItemFilterByFile.state = true
         }
 
+        check = mConfigManager.getItem(ConfigManager.ITEM_ADB_FILTER_MODE)
+        if (!check.isNullOrEmpty()) {
+            PackageManager.FilterMode = check.toInt()
+        } else {
+            PackageManager.FilterMode = PackageManager.FILTER_MODE_UID
+        }
+        mItemFilterByPid.state = PackageManager.FilterMode == PackageManager.FILTER_MODE_PID
+
         check = mConfigManager.getItem(ConfigManager.ITEM_SCROLLBACK)
         if (!check.isNullOrEmpty()) {
             mScrollbackTF.text = check
@@ -1658,6 +1672,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mFilteredLogPanel.mTableModel.stopFollow()
         mFullLogPanel.mTableModel.stopScan()
         mFullLogPanel.mTableModel.stopFollow()
+        PackageManager.getInstance().stopPidMonitor()
         mLogCmdManager.stop()
 
         val scrollback = mFilteredLogPanel.mTableModel.mScrollback
@@ -2175,6 +2190,10 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         CurrentMethod = method
         mFilteredLogPanel.mTableModel.stopScan()
         mFilteredLogPanel.mTableModel.stopFollow()
+        if (method == METHOD_OPEN || method == METHOD_FOLLOW) {
+            PackageManager.getInstance().stopPidMonitor()
+            mLogCmdManager.stop()
+        }
     }
 
     fun openFile(path: String, isAppend: Boolean, isReload: Boolean) {
@@ -2363,6 +2382,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             PackageManager.getInstance().updateUids(packageBtns)
             mLogCmdManager.startLogcat()
         }
+        PackageManager.getInstance().startPidMonitor()
         mFilteredLogPanel.mTableModel.startScan()
         if (IsFlatLaf && !IsFlatLightLaf) {
             mStatusMethod.background = Color(0x00, 0x50, 0x00)
@@ -2375,6 +2395,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     }
 
     fun stopAdbScan() {
+        PackageManager.getInstance().stopPidMonitor()
         if (mLogCmdManager.getType() == LogCmdManager.TYPE_CMD) {
             mStatusMethod.text = " ${Strings.CMD} ${Strings.STOP} "
         }
@@ -2410,6 +2431,8 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
 
     fun startFileFollow(filePath: String) {
         saveRecentFile()
+        PackageManager.getInstance().stopPidMonitor()
+        mLogCmdManager.stop()
 
         if (filePath.isNotEmpty()) {
             mFullLogPanel.mTableModel.setLogFile(filePath)
@@ -2651,6 +2674,22 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
 
                 mItemFilterByFile -> {
                     mConfigManager.saveItem(ConfigManager.ITEM_FILTER_BY_FILE, mItemFilterByFile.state.toString())
+                }
+
+                mItemFilterByPid -> {
+                    PackageManager.FilterMode = if (mItemFilterByPid.state) {
+                        PackageManager.FILTER_MODE_PID
+                    } else {
+                        PackageManager.FILTER_MODE_UID
+                    }
+                    mConfigManager.saveItem(ConfigManager.ITEM_ADB_FILTER_MODE, PackageManager.FilterMode.toString())
+                    if (mFilteredLogPanel.mTableModel.isScanning()) {
+                        if (PackageManager.FilterMode == PackageManager.FILTER_MODE_PID) {
+                            PackageManager.getInstance().startPidMonitor()
+                        } else {
+                            PackageManager.getInstance().stopPidMonitor()
+                        }
+                    }
                 }
 
                 mItemColorTagRegex -> {

@@ -16,7 +16,8 @@ import javax.swing.table.DefaultTableCellRenderer
 data class ProcessItem(val mPid: String, val mProcessName: String, val mUser: String)
 
 class ProcessList private constructor() {
-    private val mProcessMap: MutableMap<String, ProcessItem> = mutableMapOf()
+    @Volatile
+    private var mProcessMap: Map<String, ProcessItem> = emptyMap()
     private var mUpdatedTime: Long = 0
 
     companion object {
@@ -69,11 +70,15 @@ class ProcessList private constructor() {
     }
 
     fun clear() {
-        mProcessMap.clear()
+        mProcessMap = emptyMap()
     }
 
     fun add(processItem: ProcessItem) {
-        mProcessMap[processItem.mPid] = processItem
+        mProcessMap = mProcessMap + (processItem.mPid to processItem)
+    }
+
+    fun setProcesses(map: Map<String, ProcessItem>) {
+        mProcessMap = map
     }
 
     private fun updateProcesses(): Boolean {
@@ -85,6 +90,26 @@ class ProcessList private constructor() {
         } else {
             return false
         }
+    }
+
+    fun forceRefresh(): Boolean {
+        if (MainUI.CurrentMethod != MainUI.METHOD_ADB) {
+            return false
+        }
+        LogCmdManager.getInstance().getProcesses()
+        mUpdatedTime = System.currentTimeMillis()
+        return true
+    }
+
+    fun getPids(packageName: String): List<String> {
+        val pids = mutableListOf<String>()
+        for (entry in mProcessMap) {
+            val name = entry.value.mProcessName
+            if (name == packageName || name.startsWith("$packageName:")) {
+                pids.add(entry.value.mPid)
+            }
+        }
+        return pids
     }
 
     fun showList() {
