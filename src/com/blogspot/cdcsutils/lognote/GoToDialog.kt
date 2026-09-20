@@ -6,7 +6,7 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import javax.swing.*
 
-class GoToDialog (parent: JFrame) : JDialog(parent, "GoTo line", true) {
+class GoToDialog (parent: JFrame, defaultValue: Int = -1) : JDialog(parent, "GoTo line", true) {
 
     val mTF = JTextField()
     private val mLabel = JLabel(" GoTo : ")
@@ -15,8 +15,11 @@ class GoToDialog (parent: JFrame) : JDialog(parent, "GoTo line", true) {
 
     init {
         mTF.addKeyListener(KeyHandler())
+        if (defaultValue > 0) {
+            mTF.text = defaultValue.toString()
+        }
         mTF.alignmentX = JTextField.CENTER_ALIGNMENT
-        mTF.preferredSize = Dimension(60, 30)
+        mTF.preferredSize = Dimension(160, 30)
         mLabel.preferredSize = Dimension(70, 30)
         val panel = JPanel(BorderLayout())
         panel.add(mTF, BorderLayout.CENTER)

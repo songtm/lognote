@@ -67,13 +67,13 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
         getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none")
         getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
             KeyStroke.getKeyStroke(
-                KeyEvent.VK_PAGE_UP,
+                KeyEvent.VK_HOME,
                 InputEvent.CTRL_DOWN_MASK
             ), "none"
         )
         getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(
             KeyStroke.getKeyStroke(
-                KeyEvent.VK_PAGE_DOWN,
+                KeyEvent.VK_END,
                 InputEvent.CTRL_DOWN_MASK
             ), "none"
         )

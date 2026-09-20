@@ -4136,7 +4136,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     private fun registerKeyStroke() {
         mScrollbackTF.getInputMap(JTextField.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.CTRL_DOWN_MASK), "none")
 
-        var stroke = KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, InputEvent.CTRL_DOWN_MASK)
+        var stroke = KeyStroke.getKeyStroke(KeyEvent.VK_END, InputEvent.CTRL_DOWN_MASK)
         var actionMapKey = javaClass.name + ":GO_TO_LAST"
         var action: Action = object : AbstractAction() {
             override fun actionPerformed(event: ActionEvent) {
@@ -4147,7 +4147,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
         rootPane.actionMap.put(actionMapKey, action)
 
-        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, InputEvent.CTRL_DOWN_MASK)
+        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_HOME, InputEvent.CTRL_DOWN_MASK)
         actionMapKey = javaClass.name + ":GO_TO_FIRST"
         action = object : AbstractAction() {
             override fun actionPerformed(event: ActionEvent) {
@@ -4172,7 +4172,14 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         actionMapKey = javaClass.name + ":GO_TO_LINE"
         action = object : AbstractAction() {
             override fun actionPerformed(event: ActionEvent) {
-                val goToDialog = GoToDialog(this@MainUI)
+                val defaultValue = if (mFilteredLogPanel.mTable.selectedRow >= 0) {
+                    mFilteredLogPanel.getSelectedLine()
+                } else if (mFullLogPanel.mTable.selectedRow >= 0) {
+                    mFullLogPanel.getSelectedLine()
+                } else {
+                    -1
+                }
+                val goToDialog = GoToDialog(this@MainUI, defaultValue)
                 goToDialog.setLocationRelativeTo(this@MainUI)
                 goToDialog.isVisible = true
                 if (goToDialog.mLine != -1) {
