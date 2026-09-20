@@ -267,11 +267,12 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
     }
 
     private fun updateTableBarPackageItems() {
-        if (PackageManager.getInstance().mShowPackageList.isNotEmpty()) {
-            mPackageBtns = Array(PackageManager.getInstance().mShowPackageList.size) { PackageToggleButton(PackageManager.getInstance().mShowPackageList[it].mPackageName) }
+        val packageManager = PackageManager.getInstance()
+        if (packageManager.mShowPackageList.isNotEmpty()) {
+            mPackageBtns = Array(packageManager.mShowPackageList.size) { PackageToggleButton(packageManager.mShowPackageList[it].mPackageName) }
             for (idx in mPackageBtns.indices) {
                 mPackageBtns[idx].mIsValid = true
-                mPackageBtns[idx].isSelected = true
+                mPackageBtns[idx].isSelected = packageManager.mShowPackageList[idx].mIsSelected
                 mPackageBtns[idx].border = ColorButtonBorder(mCtrlMainPanel.background)
                 mPackageBtns[idx].margin = Insets(0, 3, 0, 3)
                 mPackageBtns[idx].addActionListener(mActionHandler)
@@ -616,6 +617,18 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
                     }
                     mTable.mTableModel.mBoldTokenEndIdx = -1
                     mTable.repaint()
+                    isNeedCheck = false
+                    break
+                }
+            }
+            for (idx in mPackageBtns.indices) {
+                if (p0?.source == mPackageBtns[idx]) {
+                    for (showItem in PackageManager.getInstance().mShowPackageList) {
+                        if (showItem.mPackageName == mPackageBtns[idx].text) {
+                            showItem.mIsSelected = mPackageBtns[idx].isSelected
+                            break
+                        }
+                    }
                     isNeedCheck = false
                     break
                 }
