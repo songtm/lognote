@@ -8,6 +8,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.plaf.basic.BasicComboBoxRenderer
+import javax.swing.plaf.basic.ComboPopup
 import javax.swing.text.BadLocationException
 import javax.swing.text.DefaultHighlighter
 import javax.swing.text.Highlighter
@@ -96,6 +97,12 @@ class FilterComboBox(mode: Mode, useColorTag: Boolean) : JComboBox<String>() {
             inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), "FilterComboCopy")
             mEditorComponent.actionMap.put("FilterComboCopy", CopyAction())
         }
+
+        val deleteStroke = KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)
+        val originalDeleteKey = inputMap.get(deleteStroke)
+        val originalDeleteAction = if (originalDeleteKey != null) mEditorComponent.actionMap.get(originalDeleteKey) else null
+        inputMap.put(deleteStroke, "FilterComboDeleteItem")
+        mEditorComponent.actionMap.put("FilterComboDeleteItem", DeleteItemAction(originalDeleteAction))
     }
 
     inner class CopyAction : AbstractAction() {
@@ -121,6 +128,14 @@ class FilterComboBox(mode: Mode, useColorTag: Boolean) : JComboBox<String>() {
         }
     }
 
+    inner class DeleteItemAction(private val fallback: Action?) : AbstractAction() {
+        override fun actionPerformed(e: ActionEvent?) {
+            if (!isPopupVisible || !removeSelectedHistoryItem()) {
+                fallback?.actionPerformed(e)
+            }
+        }
+    }
+
     fun setEnabledFilter(enabled: Boolean) {
         isEnabled = enabled
         isVisible = !(!enabled && editor.item.toString().isEmpty())
@@ -132,6 +147,9 @@ class FilterComboBox(mode: Mode, useColorTag: Boolean) : JComboBox<String>() {
     }
 
     fun resetComboItem(item: String) {
+        if (item.isBlank()) {
+            return
+        }
         val idx = getItemIdx(item)
         if (idx >= 0) {
             if (idx == 0) {
@@ -142,6 +160,31 @@ class FilterComboBox(mode: Mode, useColorTag: Boolean) : JComboBox<String>() {
         insertItemAt(item, 0)
         selectedIndex = 0
         return
+    }
+
+    var mRemoveItemCallback: (String) -> Unit = { }
+
+    fun removeSelectedHistoryItem(): Boolean {
+        val idx = selectedHistoryIndex()
+        if (idx <= 0 || idx >= itemCount) {
+            return false
+        }
+        val item = getItemAt(idx).toString()
+        removeItemAt(idx)
+        mRemoveItemCallback(item)
+        return true
+    }
+
+    private fun selectedHistoryIndex(): Int {
+        if (selectedIndex > 0) {
+            return selectedIndex
+        }
+        val popup = ui.getAccessibleChild(this, 0) as? ComboPopup
+        val listIdx = popup?.list?.selectedIndex ?: -1
+        if (listIdx > 0) {
+            return listIdx
+        }
+        return -1
     }
 
     fun setFilterText(text : String) {

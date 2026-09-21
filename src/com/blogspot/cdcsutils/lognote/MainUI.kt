@@ -459,6 +459,24 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         }
     }
 
+    private fun removeFilterItemFromConfig(keyPrefix: String, maxCount: Int, item: String) {
+        mConfigManager.loadConfig()
+        val items = mutableListOf<String>()
+        for (i in 0 until maxCount) {
+            val cur = mConfigManager.getItem(keyPrefix + i) ?: break
+            items.add(cur)
+        }
+        items.remove(item)
+        for (i in 0 until maxCount) {
+            if (i < items.size) {
+                mConfigManager.setItem(keyPrefix + i, items[i])
+            } else {
+                mConfigManager.removeConfigItem(keyPrefix + i)
+            }
+        }
+        mConfigManager.saveConfig()
+    }
+
     private fun saveConfigOnDestroy() {
         mConfigManager.loadConfig()
 
@@ -894,6 +912,9 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mShowLogCombo.addItemListener(mItemHandler)
         mShowLogCombo.addPopupMenuListener(mPopupMenuHandler)
         mShowLogCombo.editor.editorComponent.addMouseListener(mMouseHandler)
+        mShowLogCombo.mRemoveItemCallback = { item ->
+            removeFilterItemFromConfig(ConfigManager.ITEM_SHOW_LOG, ConfigManager.COUNT_SHOW_LOG, item)
+        }
         mShowLogToggle = FilterToggleButton(Strings.LOG)
         mShowLogToggle.toolTipText = TooltipStrings.LOG_TOGGLE
         mShowLogToggle.margin = Insets(0, 0, 0, 0)
@@ -911,6 +932,9 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mBoldLogCombo.renderer = FilterComboBox.ComboBoxRenderer()
         mBoldLogCombo.addItemListener(mItemHandler)
         mBoldLogCombo.editor.editorComponent.addMouseListener(mMouseHandler)
+        mBoldLogCombo.mRemoveItemCallback = { item ->
+            removeFilterItemFromConfig(ConfigManager.ITEM_HIGHLIGHT_LOG, ConfigManager.COUNT_HIGHLIGHT_LOG, item)
+        }
         mBoldLogToggle = FilterToggleButton(Strings.BOLD)
         mBoldLogToggle.toolTipText = TooltipStrings.BOLD_TOGGLE
         mBoldLogToggle.margin = Insets(0, 0, 0, 0)
@@ -932,6 +956,11 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             mTokenCombo[idx].renderer = FilterComboBox.ComboBoxRenderer()
             mTokenCombo[idx].addItemListener(mItemHandler)
             mTokenCombo[idx].editor.editorComponent.addMouseListener(mMouseHandler)
+            mTokenCombo[idx].mRemoveItemCallback = { item ->
+                val formatName = mFormatManager.mCurrFormat.mName
+                val token = mFormatManager.mCurrFormat.mTokenFilters[idx].mToken
+                removeFilterItemFromConfig("${ConfigManager.ITEM_TOKEN_FILTER}${formatName}_${token}_", ConfigManager.COUNT_TOKEN_FILTER, item)
+            }
             mTokenToggle[idx].toolTipText = TooltipStrings.TOKEN_TOGGLE
             mTokenToggle[idx].margin = Insets(0, 0, 0, 0)
             mTokenToggle[idx].preferredSize = Dimension(mTokenToggle[idx].preferredSize.width, mTokenCombo[idx].preferredSize.height)
@@ -3795,6 +3824,9 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             }
             mFindCombo.editor.editorComponent.addKeyListener(mFindKeyHandler)
             mFindCombo.addPopupMenuListener(mFindPopupMenuHandler)
+            mFindCombo.mRemoveItemCallback = { item ->
+                removeFilterItemFromConfig(ConfigManager.ITEM_FIND_LOG, ConfigManager.COUNT_FIND_LOG, item)
+            }
 
             mFindMatchCaseToggle = FilterToggleButton("Aa")
             mFindMatchCaseToggle.toolTipText = TooltipStrings.FIND_CASE_TOGGLE
