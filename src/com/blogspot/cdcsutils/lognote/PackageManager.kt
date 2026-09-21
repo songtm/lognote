@@ -24,6 +24,7 @@ class PackageManager private constructor() {
     var mPackageArray = Array(0) { arrayOfNulls<Any>(4) }
     val mShowPackageList = mutableListOf<PackageItem>()
     private var mSelectedUids = ""
+    private var mUser = ""
 
     private var mUpdatedTime: Long = 0
 
@@ -77,7 +78,15 @@ class PackageManager private constructor() {
 
     fun showPackageDialog() {
         updatePackages()
+        buildPackageArray()
 
+        val mainUI = MainUI.getInstance()
+        val packageSelectDialog = PackageSelectDialog(mainUI)
+        packageSelectDialog.setLocationRelativeTo(mainUI)
+        packageSelectDialog.isVisible = true
+    }
+
+    private fun buildPackageArray() {
         mPackageArray = Array(mShowPackageList.size + mPackageMap.size) {
             arrayOfNulls<Any>(
                 5
@@ -105,11 +114,6 @@ class PackageManager private constructor() {
             mPackageArray[idx][4] = true
             idx++
         }
-
-        val mainUI = MainUI.getInstance()
-        val packageSelectDialog = PackageSelectDialog(mainUI)
-        packageSelectDialog.setLocationRelativeTo(mainUI)
-        packageSelectDialog.isVisible = true
     }
 
     fun updateUids(packageBtns: Array<PackageToggleButton>) {
@@ -145,6 +149,14 @@ class PackageManager private constructor() {
     fun getUids(): String {
         return if (mSelectedUids.trim().isNotEmpty()) {
             "--uid=$mSelectedUids"
+        } else {
+            ""
+        }
+    }
+
+    fun getUser(): String {
+        return if (mUser.trim().isNotEmpty()) {
+            "--user=${mUser.trim()}"
         } else {
             ""
         }
@@ -186,6 +198,9 @@ class PackageManager private constructor() {
         private var mCloseBtn : JButton
         private val mCellRenderer = PackageCellRenderer()
         private val mSearchTF = JTextField()
+        private val mUserTF = JTextField()
+        private var mReloadBtn : JButton
+        private lateinit var mModel: DefaultTableModel
         private var mSorter: TableRowSorter<DefaultTableModel>? = null
 
         init {
@@ -212,6 +227,7 @@ class PackageManager private constructor() {
                 }
             }
 
+            mModel = model
             mTable = JTable(model)
             mSorter = TableRowSorter(model)
             mTable.rowSorter = mSorter
@@ -250,6 +266,9 @@ class PackageManager private constructor() {
             mCloseBtn = JButton(Strings.CLOSE)
             mCloseBtn.addActionListener(this)
 
+            mReloadBtn = JButton(Strings.RELOAD)
+            mReloadBtn.addActionListener(this)
+
             val panel = JPanel()
             panel.layout = BorderLayout()
 
@@ -270,7 +289,23 @@ class PackageManager private constructor() {
                 override fun changedUpdate(e: DocumentEvent?) { updateFilter() }
             })
             searchPanel.add(mSearchTF, BorderLayout.CENTER)
-            topPanel.add(searchPanel, BorderLayout.SOUTH)
+
+            mUserTF.text = mUser
+            mUserTF.addActionListener(this)
+
+            val userPanel = JPanel()
+            userPanel.layout = BorderLayout(5, 0)
+            userPanel.border = BorderFactory.createEmptyBorder(0, 5, 5, 5)
+            userPanel.add(JLabel(Strings.USER_ID), BorderLayout.WEST)
+            userPanel.add(mUserTF, BorderLayout.CENTER)
+            userPanel.add(mReloadBtn, BorderLayout.EAST)
+
+            val inputPanel = JPanel()
+            inputPanel.layout = GridLayout(2, 1)
+            inputPanel.add(searchPanel)
+            inputPanel.add(userPanel)
+
+            topPanel.add(inputPanel, BorderLayout.SOUTH)
 
             panel.add(topPanel, BorderLayout.NORTH)
             panel.add(mScrollPane, BorderLayout.CENTER)
@@ -295,6 +330,19 @@ class PackageManager private constructor() {
             } else {
                 RowFilter.regexFilter("(?i)" + Pattern.quote(text), 1, 2)
             }
+        }
+
+        private fun reloadPackages() {
+            mUser = mUserTF.text.trim()
+            mUpdatedTime = 0
+            updatePackages()
+            buildPackageArray()
+
+            mModel.setRowCount(0)
+            for (row in mPackageArray) {
+                mModel.addRow(row)
+            }
+            updateFilter()
         }
 
         internal inner class MouseHandler : MouseAdapter() {
@@ -347,6 +395,9 @@ class PackageManager private constructor() {
                 mPackageMap.clear()
                 mPackageArray = emptyArray()
                 dispose()
+            }
+            else if (e?.source == mReloadBtn || e?.source == mUserTF) {
+                reloadPackages()
             }
         }
 

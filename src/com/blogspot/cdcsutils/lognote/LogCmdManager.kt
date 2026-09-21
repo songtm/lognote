@@ -312,11 +312,12 @@ class LogCmdManager private constructor(){
                 run {
                     mPackageManager.clear()
 
+                    val user = mPackageManager.getUser()
                     val cmd = if (mTargetDevice.isNotBlank()) {
-                        "$mAdbCmd -s $mTargetDevice shell cmd package list packages -U"
+                        "$mAdbCmd -s $mTargetDevice shell cmd package list packages -U $user"
                     }
                     else {
-                        "$mAdbCmd shell cmd package list packages -U"
+                        "$mAdbCmd shell cmd package list packages -U $user"
                     }
 
                     val runtime = Runtime.getRuntime()
