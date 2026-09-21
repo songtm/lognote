@@ -4,6 +4,7 @@ import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.*
 import java.io.File
+import java.io.IOException
 import java.net.URI
 import java.util.*
 import javax.swing.*
@@ -22,6 +23,7 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
     private var mLastBtn: ColorButton
     private var mTokenBtns: Array<FilterToggleButton>
     var mPackageBtns: Array<PackageToggleButton> = emptyArray()
+    private var mSyncPidBtn: ColorButton? = null
     private var mBookmarksBtn: FilterToggleButton
     private var mFullBtn: FilterToggleButton
     private var mSyncLineBtn: ColorButton
@@ -264,6 +266,60 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
         }
         mCtrlMainPanel.add(packagesBtn)
         updateTableBarPackageItems()
+        if (mPackageBtns.isNotEmpty()) addSyncPidBtn()
+    }
+
+    private fun addSyncPidBtn() {
+        val syncPidBtn = ColorButton("SyncPID")
+        syncPidBtn.border =  ColorButtonBorder(Color.lightGray)
+        syncPidBtn.background = mCtrlMainPanel.background
+        syncPidBtn.toolTipText = TooltipStrings.SYNC_PID_BTN
+        syncPidBtn.margin = Insets(0, 3, 0, 3)
+        syncPidBtn.addActionListener { syncSelectedPackagePid() }
+        mSyncPidBtn = syncPidBtn
+        mCtrlMainPanel.add(syncPidBtn)
+    }
+
+    private fun syncSelectedPackagePid() {
+        val logCmdManager = LogCmdManager.getInstance()
+        val selectedPackages = PackageManager.getInstance().mShowPackageList.filter { it.mIsSelected }
+        if (selectedPackages.isEmpty()) {
+            mMainUI.setTokenFilterText("", "PID")
+            return
+        }
+
+        val adbShell = if (logCmdManager.mTargetDevice.isNotBlank()) {
+            "${logCmdManager.mAdbCmd} -s ${logCmdManager.mTargetDevice} shell"
+        }
+        else {
+            "${logCmdManager.mAdbCmd} shell"
+        }
+
+        val pidCmd = "$adbShell pidof ${selectedPackages.joinToString(" ") { it.mPackageName }}"
+
+        val thread = Thread {
+            try {
+                val runtime = Runtime.getRuntime()
+                val process = runtime.exec(pidCmd)
+                val output = process.inputStream.bufferedReader().readText()
+                process.waitFor()
+                val pids = output.trim().split(Regex("\\s+"))
+                    .filter { it.isNotEmpty() && it.all { c -> c.isDigit() } }
+
+                SwingUtilities.invokeLater {
+                    if (pids.isEmpty()) {
+                        Utils.printlnLog("SyncPID : failed to get PID of ${selectedPackages.joinToString(", ") { it.mPackageName }}")
+                    }
+                    else {
+                        mMainUI.setTokenFilterText(pids.joinToString("|"), "PID")
+                    }
+                }
+            } catch (e: IOException) {
+                Utils.printlnLog("SyncPID : failed run $pidCmd")
+                e.printStackTrace()
+            }
+        }
+        thread.start()
     }
 
     private fun updateTableBarPackageItems() {
@@ -307,6 +363,7 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
             mCtrlMainPanel.add(mFullBtn)
             mCtrlMainPanel.add(mBookmarksBtn)
         }
+        mSyncPidBtn?.background = mCtrlMainPanel.background
 
         addVSeparator(mCtrlMainPanel)
         if (mBasePanel != null) {

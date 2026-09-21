@@ -3229,13 +3229,11 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     }
 
     fun setTokenFilterText(text: String, tokenTag:String = "PID") {
-        if (text.isNotEmpty()) {
-            for ((index, toggleButton) in mTokenToggle.withIndex()) {
-                if (toggleButton.text == tokenTag) {
-                    toggleButton.isSelected = true
-                    mTokenCombo[index].setFilterText(text)
-                    mFilteredLogPanel.mTableModel.mFilterTokenMgr.set(index, text)
-                }
+        for ((index, toggleButton) in mTokenToggle.withIndex()) {
+            if (toggleButton.text == tokenTag) {
+                toggleButton.isSelected = true
+                mTokenCombo[index].setFilterText(text)
+                mFilteredLogPanel.mTableModel.mFilterTokenMgr.set(index, text)
             }
         }
     }

@@ -68,6 +68,7 @@ class TooltipStringsEn private constructor() {
                 , "Where to apply filters to log"
                 , "Order: A|B|C|D...\nValues: Name, Log Position(see sample text table), Width(-1 : remainder)\nShow only the set log positions"
                 , "Shows the selected log. Long logs are shown in their entirety with line breaks, and you can select part of the text."
+                , "Get the current PID of the selected package and set it to the PID filter"
 //                , ""
             )
 
