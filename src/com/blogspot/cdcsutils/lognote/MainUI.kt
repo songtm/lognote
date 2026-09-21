@@ -741,7 +741,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         mMenuView.add(mItemFind)
 
         mItemTrigger = JCheckBoxMenuItem(Strings.LOG_TRIGGER).apply {
-            accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.CTRL_MASK)
+            // accelerator = KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.CTRL_MASK)
             addActionListener {
                 if (!mAgingTestManager.mTriggerPanel.isVisible) {
                     mAgingTestManager.mTriggerPanel.isVisible = true
@@ -4020,7 +4020,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     }
 
     private fun registerFilterToggleKeyStroke() {
-        var stroke = KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.CTRL_DOWN_MASK)
+        var stroke = KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK)
         var actionMapKey = javaClass.name + ":TOGGLE_SHOW_LOG_FILTER"
         var action: Action = object : AbstractAction() {
             override fun actionPerformed(event: ActionEvent) {
@@ -4030,7 +4030,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
         rootPane.actionMap.put(actionMapKey, action)
 
-        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.CTRL_DOWN_MASK)
+        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)
         actionMapKey = javaClass.name + ":TOGGLE_TOKEN_FILTER_TAG"
         action = object : AbstractAction() {
             override fun actionPerformed(event: ActionEvent) {
@@ -4040,7 +4040,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         rootPane.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(stroke, actionMapKey)
         rootPane.actionMap.put(actionMapKey, action)
 
-        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_3, InputEvent.CTRL_DOWN_MASK)
+        stroke = KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK)
         actionMapKey = javaClass.name + ":TOGGLE_TOKEN_FILTER_PID"
         action = object : AbstractAction() {
             override fun actionPerformed(event: ActionEvent) {
