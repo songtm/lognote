@@ -156,13 +156,14 @@ class PackageManager private constructor() {
 
     fun getUser(): String {
         return if (mUser.trim().isNotEmpty()) {
-            "--user=${mUser.trim()}"
+            "--user ${mUser.trim()}"
         } else {
             ""
         }
     }
 
     fun loadConfigPackages() {
+        mUser = mConfigManager.getItem(ConfigManager.ITEM_PACKAGE_USER)?.trim() ?: ""
         val packages = mConfigManager.loadPackages()
         mShowPackageList.clear()
         for (item in packages) {
@@ -189,6 +190,7 @@ class PackageManager private constructor() {
             count++
         }
         mConfigManager.savePackages(packages)
+        mConfigManager.saveItem(ConfigManager.ITEM_PACKAGE_USER, mUser.trim())
     }
 
     inner class PackageSelectDialog(mainUI: MainUI) : JDialog(mainUI, Strings.SELECT_PACKAGE, true), ActionListener {
@@ -291,6 +293,7 @@ class PackageManager private constructor() {
             searchPanel.add(mSearchTF, BorderLayout.CENTER)
 
             mUserTF.text = mUser
+            mUserTF.preferredSize = Dimension(100, mUserTF.preferredSize.height)
             mUserTF.addActionListener(this)
 
             val userPanel = JPanel()
@@ -301,9 +304,9 @@ class PackageManager private constructor() {
             userPanel.add(mReloadBtn, BorderLayout.EAST)
 
             val inputPanel = JPanel()
-            inputPanel.layout = GridLayout(2, 1)
-            inputPanel.add(searchPanel)
-            inputPanel.add(userPanel)
+            inputPanel.layout = BorderLayout(5, 0)
+            inputPanel.add(searchPanel, BorderLayout.CENTER)
+            inputPanel.add(userPanel, BorderLayout.EAST)
 
             topPanel.add(inputPanel, BorderLayout.SOUTH)
 

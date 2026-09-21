@@ -83,6 +83,7 @@ class ConfigManager private constructor() {
         const val ITEM_CMDS_TABLEBAR = "CMDS_TABLEBAR_"
 
         const val ITEM_PACKAGES_ITEM = "PACKAGES_ITEM_"
+        const val ITEM_PACKAGE_USER = "PACKAGE_USER"
 
         const val ITEM_COLOR_MANAGER = "COLOR_MANAGER_"
         const val ITEM_COLOR_FILTER_STYLE = "COLOR_FILTER_STYLE_"
