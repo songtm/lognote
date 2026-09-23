@@ -204,6 +204,7 @@ class StringsEn private constructor() {
                 , "Show Cmd Toolbar"
                 , "Hide Cmd Toolbar"
                 , "User ID"
+                , "Abnormal"
 //            , ""
             )
 

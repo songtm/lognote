@@ -323,6 +323,12 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
             mIsFilterUpdated = true
         }
 
+    var mShowAbnormalLog = true
+        set(value) {
+            field = value
+            mIsFilterUpdated = true
+        }
+
     var mScrollback = 0
         set(value) {
             field = value
@@ -1273,6 +1279,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                         val cur = when {
                             isFullMode -> true
                             item.mIsNormal -> showNormal[i]
+                            !mShowAbnormalLog -> false
                             else -> prevIsShow
                         }
                         prevIsShow = cur
@@ -1392,7 +1399,7 @@ open class LogTableModel(mainUI: MainUI, baseModel: LogTableModel?) : AbstractTa
                         }
                     }
                     else {
-                        isShow = prevIsShow
+                        isShow = if (mShowAbnormalLog) prevIsShow else false
                     }
                 }
                 prevIsShow = isShow

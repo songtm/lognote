@@ -204,6 +204,7 @@ class StringsKo private constructor() {
                 , "Cmd 툴바 보이기"
                 , "Cmd 툴바 숨기기"
                 , "사용자 ID"
+                , "비정상 로그"
 //            , ""
             )
 

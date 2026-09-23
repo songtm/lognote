@@ -144,5 +144,7 @@ class TooltipStrings private constructor() {
             get() { return currStrings[field]!! }
         val SYNC_PID_BTN = idx++.toString()
             get() { return currStrings[field]!! }
+        val VIEW_ABNORMAL_TOGGLE = idx++.toString()
+            get() { return currStrings[field]!! }
     }
 }

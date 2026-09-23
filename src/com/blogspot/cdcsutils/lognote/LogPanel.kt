@@ -25,6 +25,7 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
     var mPackageBtns: Array<PackageToggleButton> = emptyArray()
     private var mSyncPidBtn: ColorButton? = null
     private var mBookmarksBtn: FilterToggleButton
+    private var mShowAbnormalBtn: FilterToggleButton
     private var mFullBtn: FilterToggleButton
     private var mSyncLineBtn: ColorButton
 
@@ -78,6 +79,11 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
         mBookmarksBtn.toolTipText = TooltipStrings.VIEW_BOOKMARKS_TOGGLE
         mBookmarksBtn.margin = Insets(0, 3, 0, 3)
         mBookmarksBtn.addActionListener(mActionHandler)
+        mShowAbnormalBtn = FilterToggleButton(Strings.SHOW_ABNORMAL)
+        mShowAbnormalBtn.toolTipText = TooltipStrings.VIEW_ABNORMAL_TOGGLE
+        mShowAbnormalBtn.margin = Insets(0, 3, 0, 3)
+        mShowAbnormalBtn.model.isSelected = true
+        mShowAbnormalBtn.addActionListener(mActionHandler)
         mFullBtn = FilterToggleButton(Strings.FULL)
         mFullBtn.toolTipText = TooltipStrings.VIEW_FULL_TOGGLE
         mFullBtn.margin = Insets(0, 3, 0, 3)
@@ -360,8 +366,10 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
         if (mBasePanel != null) {
             mFullBtn.background = mCtrlMainPanel.background
             mBookmarksBtn.background = mCtrlMainPanel.background
+            mShowAbnormalBtn.background = mCtrlMainPanel.background
             mCtrlMainPanel.add(mFullBtn)
             mCtrlMainPanel.add(mBookmarksBtn)
+            mCtrlMainPanel.add(mShowAbnormalBtn)
         }
         mSyncPidBtn?.background = mCtrlMainPanel.background
 
@@ -710,6 +718,11 @@ class LogPanel(mainUI: MainUI, basePanel: LogPanel?, focusHandler: MainUI.FocusH
                             mBookmarksBtn.model.isSelected = false
                         }
                         mTable.mTableModel.mFullMode = selected
+                        mTable.repaint()
+                    }
+
+                    mShowAbnormalBtn -> {
+                        mTable.mTableModel.mShowAbnormalLog = mShowAbnormalBtn.model.isSelected
                         mTable.repaint()
                     }
                 }
