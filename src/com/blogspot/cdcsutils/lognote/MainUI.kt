@@ -580,12 +580,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         }
 
         if (path == recentItem.mPath) {
-            val bookmarks = recentItem.mBookmarks.split(",")
-            for (bookmark in bookmarks) {
-                if (bookmark.isNotBlank()) {
-                    mBookmarkManager.addBookmark(bookmark.toInt() + startLine)
-                }
-            }
+            mBookmarkManager.deserializeBookmarks(recentItem.mBookmarks, startLine)
 
             if (startLine == 0) {
                 val result = JOptionPane.showConfirmDialog(this, Strings.APPLY_RECENT_FILE, Strings.RECENT_FILE, JOptionPane.YES_NO_OPTION)
@@ -2265,11 +2260,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             var isExist = false
             for (item in mRecentFileManager.mRecentList) {
                 if (openItem.mPath == item.mPath) {
-                    for (bookmark in mBookmarkManager.mBookmarks) {
-                        if (bookmark >= openItem.mStartLine && bookmark <= openItem.mEndLine) {
-                            item.mBookmarks += "${ bookmark - openItem.mStartLine },"
-                        }
-                    }
+                    item.mBookmarks += mBookmarkManager.serializeBookmarks(openItem.mStartLine, openItem.mEndLine)
                     isExist = true
                 }
             }
@@ -2288,11 +2279,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
             item.mHighlightLogCheck = mBoldLogToggle.isSelected
             item.mFindMatchCase = mFindPanel.mFindMatchCaseToggle.isSelected
 
-            for (bookmark in mBookmarkManager.mBookmarks) {
-                if (bookmark >= openItem.mStartLine && bookmark <= openItem.mEndLine) {
-                    item.mBookmarks += "${ bookmark - openItem.mStartLine },"
-                }
-            }
+            item.mBookmarks += mBookmarkManager.serializeBookmarks(openItem.mStartLine, openItem.mEndLine)
 
             item.mShowLog = mShowLogCombo.selectedItem?.toString() ?: ""
             for (idx in 0 until FormatManager.MAX_TOKEN_FILTER_COUNT) {

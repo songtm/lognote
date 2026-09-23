@@ -420,5 +420,7 @@ class Strings private constructor() {
             get() { return currStrings[field]!! }
         val SHOW_ABNORMAL: String = idx++.toString()
             get() { return currStrings[field]!! }
+        val BOOKMARK_COMMENT: String = idx++.toString()
+            get() { return currStrings[field]!! }
     }
 }

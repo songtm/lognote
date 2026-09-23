@@ -205,6 +205,7 @@ class StringsEn private constructor() {
                 , "Hide Cmd Toolbar"
                 , "User ID"
                 , "Abnormal"
+                , "Bookmark comment"
 //            , ""
             )
 

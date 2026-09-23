@@ -30,8 +30,7 @@ class LogColumnTable(tableModel:LogColumnTableModel) : LogTable(tableModel) {
         }
 
         val fontMetrics = getFontMetrics(font)
-        val value = mTableModel.getValueAt(rowCount - 1, 0)
-        val column0Width = fontMetrics.stringWidth(value.toString()) + 20
+        val column0Width = getNumColumnWidth(fontMetrics)
         var newWidth = width
         if (width < LogWidth) {
             newWidth = LogWidth

@@ -41,6 +41,9 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
     private var mBaseGreen: Int = 0
     private var mBaseBlue: Int = 0
 
+    private var mCachedBookmarkWidth = -1
+    private var mCachedBookmarkFont: Font? = null
+
     init {
         this.setShowGrid(false)
         autoResizeMode = AUTO_RESIZE_OFF
@@ -102,6 +105,12 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
         }
 
         ColorManager.getInstance().addColorEventListener(colorEventListener)
+
+        mBookmarkManager.addBookmarkEventListener(object : BookmarkEventListener {
+            override fun bookmarkChanged(event: BookmarkEvent?) {
+                mCachedBookmarkWidth = -1
+            }
+        })
     }
 
     private fun updateProcessBgColor() {
@@ -152,8 +161,7 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
         }
 
         val fontMetrics = getFontMetrics(font)
-        val value = mTableModel.getValueAt(rowCount - 1, 0)
-        val column0Width = fontMetrics.stringWidth(value.toString()) + 20
+        val column0Width = getNumColumnWidth(fontMetrics)
         var newWidth = width
         if (width < LogWidth) {
             newWidth = LogWidth
@@ -173,6 +181,29 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
                 columnLog.preferredWidth = preferredLogWidth
             }
         }
+    }
+
+    protected open fun getNumColumnWidth(fontMetrics: FontMetrics): Int {
+        val value = mTableModel.getValueAt(rowCount - 1, 0)
+        val rowNumWidth = fontMetrics.stringWidth(value.toString()) + 20
+
+        var bookmarkWidth = 0
+        if (mCachedBookmarkWidth >= 0 && mCachedBookmarkFont == font) {
+            bookmarkWidth = mCachedBookmarkWidth
+        } else {
+            for (bookmark in mBookmarkManager.mBookmarks) {
+                val comment = mBookmarkManager.getBookmarkComment(bookmark)
+                if (!comment.isNullOrEmpty()) {
+                    val commentWidth = fontMetrics.stringWidth("$bookmark  $comment") + 20
+                    if (commentWidth > bookmarkWidth) {
+                        bookmarkWidth = commentWidth
+                    }
+                }
+            }
+            mCachedBookmarkWidth = bookmarkWidth
+            mCachedBookmarkFont = font
+        }
+        return maxOf(rowNumWidth, bookmarkWidth)
     }
 
     internal class LineNumBorder(color: Color, thickness: Int) : AbstractBorder() {
@@ -226,6 +257,13 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
             }
 
             val label = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col) as JLabel
+
+            val comment = mBookmarkManager.getBookmarkComment(num)
+            label.text = if (comment.isNullOrEmpty()) {
+                value?.toString() ?: ""
+            } else {
+                "$num  $comment"
+            }
 
             foreground = mTableColor.mLineNumFG
             background = if (mBookmarkManager.mBookmarks.contains(num)) {
@@ -635,7 +673,14 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
         }
     }
 
-    private fun updateBookmark(targetRow: Int) {
+    private fun showBookmarkCommentDialog(): String? {
+        return JOptionPane.showInputDialog(
+            SwingUtilities.getWindowAncestor(this),
+            Strings.BOOKMARK_COMMENT
+        )
+    }
+
+    private fun updateBookmark(targetRow: Int, isAltDown: Boolean = false) {
         if (selectedRowCount > 1) {
             var isAdd = false
             for (row in selectedRows) {
@@ -648,13 +693,21 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
                 }
             }
 
+            var comment: String? = null
+            if (isAdd && isAltDown) {
+                comment = showBookmarkCommentDialog()
+                if (comment == null) {
+                    return
+                }
+            }
+
             for (row in selectedRows) {
                 val value = mTableModel.getValueAt(row, 0)
                 val bookmark = value.toString().trim().toInt()
 
                 if (isAdd) {
                     if (!mBookmarkManager.isBookmark(bookmark)) {
-                        mBookmarkManager.addBookmark(bookmark)
+                        mBookmarkManager.addBookmark(bookmark, comment)
                     }
                 } else {
                     if (mBookmarkManager.isBookmark(bookmark)) {
@@ -665,7 +718,15 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
         } else {
             val value = mTableModel.getValueAt(targetRow, 0)
             val bookmark = value.toString().trim().toInt()
-            mBookmarkManager.updateBookmark(bookmark)
+            if (!mBookmarkManager.isBookmark(bookmark) && isAltDown) {
+                val comment = showBookmarkCommentDialog()
+                if (comment == null) {
+                    return
+                }
+                mBookmarkManager.addBookmark(bookmark, comment)
+            } else {
+                mBookmarkManager.updateBookmark(bookmark)
+            }
         }
     }
 
@@ -968,7 +1029,8 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
                     }
 
                     mBookmarkItem -> {
-                        updateBookmark(selectedRow)
+                        val isAltDown = (p0?.modifiers ?: 0) and ActionEvent.ALT_MASK != 0
+                        updateBookmark(selectedRow, isAltDown)
                     }
 
                     mReconnectItem -> {
@@ -1071,7 +1133,7 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
                         secondClickRow
                     }
                     if (columnAtPoint(p0.point) == 0) {
-                        updateBookmark(targetRow)
+                        updateBookmark(targetRow, p0.isAltDown)
                     } else {
                         showSelected(targetRow)
                     }
@@ -1169,7 +1231,7 @@ open class LogTable(tableModel: LogTableModel) : JTable(tableModel) {
             ToolTipManager.sharedInstance().mouseMoved(MouseEvent(this@LogTable, 0, 0, 0, 0, 0, 0, false))
             if (p0?.isControlDown == true) {
                 if (p0.keyCode == KeyEvent.VK_F2) {
-                    updateBookmark(selectedRow)
+                    updateBookmark(selectedRow, p0.isAltDown)
                 }
             } else {
                 when (p0?.keyCode) {
