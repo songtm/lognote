@@ -14,6 +14,8 @@ interface BookmarkEventListener {
     fun bookmarkChanged(event:BookmarkEvent?)
 }
 
+class BookmarkSnapshot(val mBookmarks: List<Int>, val mComments: Map<Int, String>)
+
 class BookmarkManager private constructor(){
     companion object {
         private val mInstance: BookmarkManager = BookmarkManager()
@@ -84,6 +86,22 @@ class BookmarkManager private constructor(){
             listener.bookmarkChanged(BookmarkEvent(BookmarkEvent.REMOVED))
         }
     }
+
+    fun snapshotBookmarks(): BookmarkSnapshot {
+        return BookmarkSnapshot(mBookmarks.toList(), mBookmarkComments.toMap())
+    }
+
+    fun restoreBookmarks(snapshot: BookmarkSnapshot) {
+        mBookmarks.clear()
+        mBookmarks.addAll(snapshot.mBookmarks)
+        mBookmarkComments.clear()
+        mBookmarkComments.putAll(snapshot.mComments)
+
+        for (listener in mEventListeners) {
+            listener.bookmarkChanged(BookmarkEvent(BookmarkEvent.ADDED))
+        }
+    }
+
     fun serializeBookmarks(startLine: Int, endLine: Int): String {
         val sb = StringBuilder()
         for (bookmark in mBookmarks) {

@@ -1664,6 +1664,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
     }
 
     private fun resetLogPanel(keepCurrentMethod: Boolean) {
+        val bookmarksSnapshot = mBookmarkManager.snapshotBookmarks()
         val method = CurrentMethod
         val isRunning = when (method) {
             METHOD_ADB, METHOD_CMD -> {
@@ -1767,6 +1768,10 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
                 else -> {
                 }
             }
+        }
+
+        if (keepCurrentMethod && method == METHOD_OPEN) {
+            mBookmarkManager.restoreBookmarks(bookmarksSnapshot)
         }
     }
 
@@ -2203,6 +2208,7 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
 
     fun openFile(path: String, isAppend: Boolean, isReload: Boolean) {
         Utils.printlnLog("Opening: $path, $isAppend")
+        val bookmarkSnapshot = if (isReload) mBookmarkManager.snapshotBookmarks() else null
         saveRecentFile()
         setCurrentMethod(METHOD_OPEN)
         updateTablePNameColumn(false)
@@ -2227,6 +2233,10 @@ class MainUI private constructor() : JFrame(), FormatManager.FormatEventListener
         openItem.mEndLine = mFullLogPanel.mTableModel.rowCount - 1
         mRecentFileManager.addOpenFile(openItem)
         mFilteredLogPanel.mTableModel.loadItems(isAppend)
+
+        if (bookmarkSnapshot != null) {
+            mBookmarkManager.restoreBookmarks(bookmarkSnapshot)
+        }
 
         if (IsFlatLaf && !IsFlatLightLaf) {
             mStatusMethod.background = Color(0x50, 0x50, 0x00)
